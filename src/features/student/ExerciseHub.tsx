@@ -140,7 +140,7 @@ export default function ExerciseHub() {
                                     <span className="material-symbols-outlined text-3xl">{cat.icon}</span>
                                 </div>
                                 {cat.count && (
-                                    <span className="bg-slate-50 dark:bg-slate-800 px-4 py-2 rounded-xl text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest border border-slate-100 dark:border-slate-800">
+                                    <span className="bg-slate-50 dark:bg-slate-800 px-4 py-2 rounded-xl text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest border border-slate-100 dark:border-slate-800 min-w-[80px] text-center">
                                         {cat.count}
                                     </span>
                                 )}

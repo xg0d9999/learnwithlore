@@ -145,8 +145,24 @@ export default function StudentDashboard() {
 
     if (loading) {
         return (
-            <div className="flex-1 flex items-center justify-center bg-background-light dark:bg-background-dark min-h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <div className="max-w-[1200px] w-full mx-auto p-8 lg:p-12 animate-pulse">
+                <div className="h-4 w-32 bg-slate-200 rounded mb-10"></div>
+                <div className="flex justify-between items-end mb-10">
+                    <div className="space-y-4">
+                        <div className="h-10 w-80 bg-slate-200 rounded-lg"></div>
+                        <div className="h-4 w-64 bg-slate-100 rounded"></div>
+                    </div>
+                    <div className="h-14 w-48 bg-slate-200 rounded-2xl"></div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="h-32 bg-slate-50 border border-slate-100 rounded-xl"></div>
+                    ))}
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                    <div className="h-80 bg-slate-50 border border-slate-100 rounded-[32px]"></div>
+                    <div className="h-80 bg-slate-50 border border-slate-100 rounded-[32px]"></div>
+                </div>
             </div>
         );
     }

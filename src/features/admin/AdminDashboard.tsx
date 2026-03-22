@@ -115,9 +115,26 @@ export default function AdminDashboard() {
 
     if (loading) {
         return (
-            <div className="flex-1 flex flex-col items-center justify-center p-12 gap-4">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                <p className="text-slate-400 text-sm animate-pulse">Loading dashboard metrics...</p>
+            <div className="p-8 animate-pulse">
+                <div className="h-10 w-64 bg-slate-200 rounded-lg mb-2"></div>
+                <div className="h-4 w-96 bg-slate-100 rounded mb-8"></div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="h-32 bg-slate-50 border border-slate-100 rounded-xl"></div>
+                    ))}
+                </div>
+
+                <div className="grid grid-cols-12 gap-6">
+                    <div className="col-span-12 lg:col-span-8 space-y-6">
+                        <div className="h-80 bg-slate-50 border border-slate-100 rounded-xl"></div>
+                        <div className="h-64 bg-slate-50 border border-slate-100 rounded-xl"></div>
+                    </div>
+                    <div className="col-span-12 lg:col-span-4 space-y-6">
+                        <div className="h-48 bg-slate-50 border border-slate-100 rounded-xl"></div>
+                        <div className="h-80 bg-slate-50 border border-slate-100 rounded-xl"></div>
+                    </div>
+                </div>
             </div>
         );
     }
