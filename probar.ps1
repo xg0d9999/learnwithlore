@@ -9,7 +9,7 @@ Write-Host "Cambiando a rama 'pruebas'..." -ForegroundColor Gray
 $mensaje = Read-Host "Mensaje para la PRUEBA (ej: Ajustes responsive v1)"
 
 if (-not $mensaje) {
-    Write-Host "Debes escribir un mensaje. Operación cancelada." -ForegroundColor Red
+    Write-Host "Debes escribir un mensaje. Operacion cancelada." -ForegroundColor Red
     exit
 }
 
@@ -20,4 +20,4 @@ Write-Host "`nSubiendo a la zona de pruebas (Vercel Preview)..." -ForegroundColo
 & $gitPath commit -m "$mensaje"
 & $gitPath push origin pruebas
 
-Write-Host "`n¡Hecho! Recuerda que Vercel te dará una URL de Preview distinta a la principal." -ForegroundColor Green
+Write-Host "`nHecho! Recuerda que Vercel te dara una URL de Preview distinta a la principal." -ForegroundColor Green
