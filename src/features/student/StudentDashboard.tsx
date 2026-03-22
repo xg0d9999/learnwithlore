@@ -96,7 +96,7 @@ export default function StudentDashboard() {
             // Fetch next live call (including those already started but not finished)
             const dashboardNow = new Date();
             const dashboardBufferStart = new Date(dashboardNow.getTime() + (30 * 60 * 1000)).toISOString();
-            
+
             const { data: callData } = await supabase
                 .from('calendar_events')
                 .select('*')
@@ -182,13 +182,13 @@ export default function StudentDashboard() {
                     <h1 className="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-2 leading-tight">
                         Bienvenido de nuevo, {profile?.full_name || 'Estudiante'}
                     </h1>
-                    <p className="text-slate-500 dark:text-slate-400 max-w-lg text-lg font-medium">Has completado el 80% de tu objetivo semanal. ¡Sigue así!</p>
+                    <p className="text-slate-500 dark:text-slate-400 max-w-lg text-lg font-medium">Has completado el 8% de tu objetivo semanal. ¡Sigue así!</p>
                 </div>
 
-                <Button 
-                    variant="primary" 
-                    size="lg" 
-                    icon={<span className="material-symbols-outlined">play_circle</span>} 
+                <Button
+                    variant="primary"
+                    size="lg"
+                    icon={<span className="material-symbols-outlined">play_circle</span>}
                     className="rounded-2xl shadow-xl shadow-primary/20 h-14 px-8"
                     onClick={() => navigate('/student/asignaciones')}
                 >
@@ -237,7 +237,7 @@ export default function StudentDashboard() {
                         <div className="flex-1 bg-white dark:bg-sidebar-dark rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-800 p-8 flex flex-col justify-between group overflow-hidden relative min-h-[300px]">
                             {/* Blue expanding circle on hover */}
                             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full -mr-16 -mt-16 transition-all duration-700 group-hover:scale-[3] group-hover:bg-primary/10"></div>
-                            
+
                             <div className="relative z-10">
                                 <div className="flex items-center gap-3 mb-6">
                                     <span className="bg-primary/10 text-primary px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] border border-primary/10">
@@ -317,7 +317,7 @@ export default function StudentDashboard() {
                     <div className="flex-1 bg-white dark:bg-sidebar-dark rounded-[32px] shadow-xl border border-slate-200 dark:border-slate-800 p-8 flex flex-col gap-6 group overflow-hidden relative min-h-[300px]">
                         {/* Orange expanding circle on hover */}
                         <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/20 rounded-full -mr-16 -mt-16 transition-all duration-700 group-hover:scale-[3] group-hover:bg-orange-500/10"></div>
-                        
+
                         <div className="relative z-10 flex flex-col gap-6 h-full">
                             {/* Next Task Highlight */}
                             {nextTask && (
@@ -331,8 +331,8 @@ export default function StudentDashboard() {
                                     <h4 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight mb-4">
                                         {nextTask.lesson.title}
                                     </h4>
-                                    <Button 
-                                        variant="secondary" 
+                                    <Button
+                                        variant="secondary"
                                         className="w-full bg-white dark:bg-sidebar-dark border-orange-500/20 text-orange-600 dark:text-orange-400 rounded-xl font-bold text-xs h-10"
                                         onClick={() => navigate(`/student/exercises/${nextTask.id}`)}
                                     >
