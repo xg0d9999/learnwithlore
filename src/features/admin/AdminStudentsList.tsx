@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Button } from '../../components/ui/Button';
 import { supabase } from '../../lib/supabase';
 import { Link } from 'react-router-dom';
 import EditStudentModal from './EditStudentModal';

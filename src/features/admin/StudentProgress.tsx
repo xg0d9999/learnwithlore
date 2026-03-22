@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { supabase } from '../../lib/supabase';
-import { Assignment, CalendarEvent, UserProfile, UserProgress } from '../../types';
 import { StudentLogsModal } from './StudentLogsModal';
 import { MetricCard } from '../../components/shared/MetricCard';
 
