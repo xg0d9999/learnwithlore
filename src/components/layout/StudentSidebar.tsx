@@ -3,7 +3,12 @@ import { useAuth } from '../../context/AuthContext';
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 
-export default function StudentSidebar() {
+interface StudentSidebarProps {
+    isOpen?: boolean;
+    onClose?: () => void;
+}
+
+export default function StudentSidebar({ isOpen, onClose }: StudentSidebarProps) {
     const { user, signOut } = useAuth();
     const [isPremium, setIsPremium] = useState<boolean>(false);
 
@@ -36,98 +41,68 @@ export default function StudentSidebar() {
     const fullName = user?.user_metadata?.full_name || 'Estudiante';
     const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
 
+    const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+        `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
+            ? 'bg-primary/10 text-primary dark:bg-primary/20'
+            : 'text-slate-600 hover:bg-white hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-100'
+        }`;
+
     return (
-        <aside className="w-72 flex-shrink-0 flex flex-col border-r border-slate-200 dark:border-slate-800 bg-sidebar-light dark:bg-sidebar-dark transition-colors duration-300">
-            <div className="h-20 flex items-center px-6 border-b border-transparent dark:border-slate-800/50">
+        <aside 
+            className={`fixed inset-y-0 left-0 z-50 w-72 flex-shrink-0 flex flex-col border-r border-slate-200 dark:border-slate-800 bg-sidebar-light dark:bg-sidebar-dark transition-all duration-300 transform lg:static lg:translate-x-0 ${
+                isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
+            }`}
+        >
+            <div className="h-20 flex items-center justify-between px-6 border-b border-transparent dark:border-slate-800/50">
                 <div className="flex items-center gap-3">
                     <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary text-white shadow-lg shadow-primary/30">
                         <span className="material-symbols-outlined text-[24px]">translate</span>
                     </div>
                     <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">LearnWithLore</span>
                 </div>
+                {/* Close button for mobile */}
+                <button 
+                    onClick={onClose}
+                    className="lg:hidden p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                >
+                    <span className="material-symbols-outlined">close</span>
+                </button>
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-2 custom-scrollbar">
-                <NavLink
-                    to="/student/dashboard"
-                    className={({ isActive }) =>
-                        `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                            ? 'bg-primary/10 text-primary dark:bg-primary/20'
-                            : 'text-slate-600 hover:bg-white hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-100'
-                        }`
-                    }
-                >
+                <NavLink to="/student/dashboard" className={navLinkClass} onClick={() => window.innerWidth < 1024 && onClose?.()}>
                     <span className="material-symbols-outlined filled">dashboard</span>
                     <span className="text-sm font-medium">Inicio</span>
                 </NavLink>
 
-                <NavLink
-                    to="/student/asignaciones"
-                    className={({ isActive }) =>
-                        `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                            ? 'bg-primary/10 text-primary dark:bg-primary/20'
-                            : 'text-slate-600 hover:bg-white hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-100'
-                        }`
-                    }
-                >
+                <NavLink to="/student/asignaciones" className={navLinkClass} onClick={() => window.innerWidth < 1024 && onClose?.()}>
                     <span className="material-symbols-outlined">menu_book</span>
                     <span className="text-sm font-medium">Mis Asignaciones</span>
                 </NavLink>
 
-                <NavLink
-                    to="/student/writing"
-                    className={({ isActive }) =>
-                        `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                            ? 'bg-primary/10 text-primary dark:bg-primary/20'
-                            : 'text-slate-600 hover:bg-white hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-100'
-                        }`
-                    }
-                >
+                <NavLink to="/student/writing" className={navLinkClass} onClick={() => window.innerWidth < 1024 && onClose?.()}>
                     <span className="material-symbols-outlined">edit_note</span>
                     <span className="text-sm font-medium">Escritura</span>
                 </NavLink>
 
-                <NavLink
-                    to="/student/vocabulary"
-                    className={({ isActive }) =>
-                        `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                            ? 'bg-primary/10 text-primary dark:bg-primary/20'
-                            : 'text-slate-600 hover:bg-white hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-100'
-                        }`
-                    }
-                >
+                <NavLink to="/student/vocabulary" className={navLinkClass} onClick={() => window.innerWidth < 1024 && onClose?.()}>
                     <span className="material-symbols-outlined">menu_book</span>
                     <span className="text-sm font-medium">Vocabulario</span>
                 </NavLink>
 
-                <NavLink
-                    to="/student/exercises"
-                    className={({ isActive }) =>
-                        `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                            ? 'bg-primary/10 text-primary dark:bg-primary/20'
-                            : 'text-slate-600 hover:bg-white hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-100'
-                        }`
-                    }
-                >
+                <NavLink to="/student/exercises" className={navLinkClass} onClick={() => window.innerWidth < 1024 && onClose?.()}>
                     <span className="material-symbols-outlined">school</span>
                     <span className="text-sm font-medium">Ejercicios</span>
                 </NavLink>
 
-                <NavLink
-                    to="/student/flashcards"
-                    className={({ isActive }) =>
-                        `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                            ? 'bg-primary/10 text-primary dark:bg-primary/20'
-                            : 'text-slate-600 hover:bg-white hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-100'
-                        }`
-                    }
-                >
+                <NavLink to="/student/flashcards" className={navLinkClass} onClick={() => window.innerWidth < 1024 && onClose?.()}>
                     <span className="material-symbols-outlined filled">style</span>
                     <span className="text-sm font-medium">Flashcards</span>
                 </NavLink>
 
                 <NavLink
                     to="/student/speaking"
+                    onClick={() => window.innerWidth < 1024 && onClose?.()}
                     className={({ isActive }) =>
                         `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 border border-transparent ${isActive
                             ? 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 border-amber-500/20'
@@ -140,28 +115,12 @@ export default function StudentSidebar() {
                     <span className="text-[10px] bg-amber-500 text-white px-1.5 py-0.5 rounded-md font-black uppercase tracking-tighter shadow-sm shrink-0">PRO</span>
                 </NavLink>
 
-                <NavLink
-                    to="/student/messages"
-                    className={({ isActive }) =>
-                        `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                            ? 'bg-primary/10 text-primary dark:bg-primary/20'
-                            : 'text-slate-600 hover:bg-white hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-100'
-                        }`
-                    }
-                >
+                <NavLink to="/student/messages" className={navLinkClass} onClick={() => window.innerWidth < 1024 && onClose?.()}>
                     <span className="material-symbols-outlined">chat_bubble</span>
                     <span className="text-sm font-medium">Mensajes</span>
                 </NavLink>
 
-                <NavLink
-                    to="/student/calendar"
-                    className={({ isActive }) =>
-                        `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                            ? 'bg-primary/10 text-primary dark:bg-primary/20'
-                            : 'text-slate-600 hover:bg-white hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-100'
-                        }`
-                    }
-                >
+                <NavLink to="/student/calendar" className={navLinkClass} onClick={() => window.innerWidth < 1024 && onClose?.()}>
                     <span className="material-symbols-outlined">calendar_month</span>
                     <span className="text-sm font-medium">Calendario</span>
                 </NavLink>

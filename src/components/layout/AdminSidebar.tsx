@@ -1,7 +1,12 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-export default function AdminSidebar() {
+interface AdminSidebarProps {
+    isOpen?: boolean;
+    onClose?: () => void;
+}
+
+export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     const { user, signOut } = useAuth();
     
     // Get initials for avatar fallback
@@ -17,124 +22,76 @@ export default function AdminSidebar() {
         e.preventDefault();
         try {
             await signOut();
-            // AuthProvider/App.tsx handles the redirect via session change
         } catch (error) {
             console.error('Logout error:', error);
         }
     };
+
+    const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+        `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
+            ? 'bg-primary/10 text-primary dark:bg-primary/20'
+            : 'text-slate-600 hover:bg-white hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-100'
+        }`;
+
     return (
-        <aside className="w-72 flex-shrink-0 flex flex-col border-r border-slate-200 dark:border-slate-800 bg-sidebar-light dark:bg-sidebar-dark transition-colors duration-300 fixed h-full z-10">
-            <div className="h-20 flex items-center px-6 border-b border-transparent dark:border-slate-800/50">
+        <aside 
+            className={`fixed inset-y-0 left-0 z-50 w-72 flex-shrink-0 flex flex-col border-r border-slate-200 dark:border-slate-800 bg-sidebar-light dark:bg-sidebar-dark transition-all duration-300 transform lg:translate-x-0 ${
+                isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
+            }`}
+        >
+            <div className="h-20 flex items-center justify-between px-6 border-b border-transparent dark:border-slate-800/50">
                 <div className="flex items-center gap-3">
                     <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary text-white shadow-lg shadow-primary/30">
                         <span className="material-symbols-outlined text-[24px]">shield_person</span>
                     </div>
                     <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">LearnWithLore</span>
-                    <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 ml-1">Admin</span>
                 </div>
+                {/* Close button for mobile */}
+                <button 
+                    onClick={onClose}
+                    className="lg:hidden p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                >
+                    <span className="material-symbols-outlined">close</span>
+                </button>
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-2 custom-scrollbar">
-                <NavLink
-                    to="/admin/dashboard"
-                    className={({ isActive }) =>
-                        `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                            ? 'bg-primary/10 text-primary dark:bg-primary/20'
-                            : 'text-slate-600 hover:bg-white hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-100'
-                        }`
-                    }
-                >
+                <NavLink to="/admin/dashboard" className={navLinkClass} onClick={() => window.innerWidth < 1024 && onClose?.()}>
                     <span className="material-symbols-outlined filled">dashboard</span>
                     <span className="text-sm font-medium">Panel Control</span>
                 </NavLink>
 
-                <NavLink
-                    to="/admin/corrections"
-                    className={({ isActive }) =>
-                        `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                            ? 'bg-primary/10 text-primary dark:bg-primary/20'
-                            : 'text-slate-600 hover:bg-white hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-100'
-                        }`
-                    }
-                >
+                <NavLink to="/admin/corrections" className={navLinkClass} onClick={() => window.innerWidth < 1024 && onClose?.()}>
                     <span className="material-symbols-outlined">assignment_turned_in</span>
                     <span className="text-sm font-medium">Correcciones</span>
                 </NavLink>
 
-                <NavLink
-                    to="/admin/asignaciones"
-                    className={({ isActive }) =>
-                        `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                            ? 'bg-primary/10 text-primary dark:bg-primary/20'
-                            : 'text-slate-600 hover:bg-white hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-100'
-                        }`
-                    }
-                >
+                <NavLink to="/admin/asignaciones" className={navLinkClass} onClick={() => window.innerWidth < 1024 && onClose?.()}>
                     <span className="material-symbols-outlined">library_books</span>
                     <span className="text-sm font-medium">Asignaciones</span>
                 </NavLink>
 
-                <NavLink
-                    to="/admin/students"
-                    className={({ isActive }) =>
-                        `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                            ? 'bg-primary/10 text-primary dark:bg-primary/20'
-                            : 'text-slate-600 hover:bg-white hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-100'
-                        }`
-                    }
-                >
+                <NavLink to="/admin/students" className={navLinkClass} onClick={() => window.innerWidth < 1024 && onClose?.()}>
                     <span className="material-symbols-outlined">group</span>
                     <span className="text-sm font-medium">Alumnos</span>
                 </NavLink>
 
-                <NavLink
-                    to="/admin/builder/manual/new"
-                    className={({ isActive }) =>
-                        `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                            ? 'bg-primary/10 text-primary dark:bg-primary/20'
-                            : 'text-slate-600 hover:bg-white hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-100'
-                        }`
-                    }
-                >
+                <NavLink to="/admin/builder/manual/new" className={navLinkClass} onClick={() => window.innerWidth < 1024 && onClose?.()}>
                     <span className="material-symbols-outlined">edit_note</span>
                     <span className="text-sm font-medium">Constructor Manual</span>
                 </NavLink>
 
-                <NavLink
-                    to="/admin/builder/magic"
-                    className={({ isActive }) =>
-                        `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                            ? 'bg-primary/10 text-primary dark:bg-primary/20'
-                            : 'text-slate-600 hover:bg-white hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-100'
-                        }`
-                    }
-                >
+                <NavLink to="/admin/builder/magic" className={navLinkClass} onClick={() => window.innerWidth < 1024 && onClose?.()}>
                     <span className="material-symbols-outlined">auto_awesome</span>
                     <span className="text-sm font-medium">AI Flashcard Builder</span>
                 </NavLink>
 
-                <NavLink
-                    to="/admin/messages"
-                    className={({ isActive }) =>
-                        `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                            ? 'bg-primary/10 text-primary dark:bg-primary/20'
-                            : 'text-slate-600 hover:bg-white hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-100'
-                        }`
-                    }
-                >
+                <NavLink to="/admin/messages" className={navLinkClass} onClick={() => window.innerWidth < 1024 && onClose?.()}>
                     <span className="material-symbols-outlined">forum</span>
                     <span className="text-sm font-medium">Mensajes</span>
                 </NavLink>
 
-                <NavLink
-                    to="/admin/calendar"
-                    className={({ isActive }) =>
-                        `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                            ? 'bg-primary/10 text-primary dark:bg-primary/20'
-                            : 'text-slate-600 hover:bg-white hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-100'
-                        }`
-                    }
-                >
+                <NavLink to="/admin/calendar" className={navLinkClass} onClick={() => window.innerWidth < 1024 && onClose?.()}>
                     <span className="material-symbols-outlined">calendar_month</span>
                     <span className="text-sm font-medium">Calendario</span>
                 </NavLink>
