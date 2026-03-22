@@ -141,7 +141,7 @@ export default function WritingWorkshop() {
 
             setIsModalOpen(true);
         } catch (error) {
-            console.error('Error submitting writting:', error);
+            console.error('Error submitting writing:', error);
         } finally {
             setLoading(false);
         }
