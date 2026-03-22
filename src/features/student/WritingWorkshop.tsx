@@ -33,14 +33,14 @@ export default function WritingWorkshop() {
 
     useEffect(() => {
         if (!lessonId) return;
-        
+
         const fetchLesson = async () => {
             const { data, error } = await supabase
                 .from('lessons')
                 .select('*')
                 .eq('id', lessonId)
                 .single();
-            
+
             if (data) setLesson(data);
             if (error) console.error('Error fetching writing lesson:', error);
         };
@@ -55,7 +55,7 @@ export default function WritingWorkshop() {
                 supabase.from('user_progress').select('*').eq('user_id', user.id).single(),
                 supabase.from('assignments').select('*').eq('student_id', user.id).eq('lesson_id', lessonId).maybeSingle()
             ]);
-            
+
             if (progRes.data) setUserProgress(progRes.data);
             if (asgnRes.data) {
                 setAssignment(asgnRes.data);
@@ -124,7 +124,7 @@ export default function WritingWorkshop() {
                     })
                     .eq('id', assignment.id);
             }
-            
+
             await logUserActivity(user.id, 'assignment', `Enviada asignación de escritura: ${lesson.title}`);
 
             // 3. Award XP & Update Stats
@@ -133,7 +133,7 @@ export default function WritingWorkshop() {
 
             await supabase
                 .from('user_progress')
-                .update({ 
+                .update({
                     total_xp: currentXP + xpAwarded,
                     last_activity_at: new Date().toISOString()
                 })
@@ -141,7 +141,7 @@ export default function WritingWorkshop() {
 
             setIsModalOpen(true);
         } catch (error) {
-            console.error('Error submitting writing:', error);
+            console.error('Error submitting writting:', error);
         } finally {
             setLoading(false);
         }
