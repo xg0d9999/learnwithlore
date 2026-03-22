@@ -1,10 +1,4 @@
 {
-  "rewriteConfigs": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ],
   "rewrites": [
     {
       "source": "/(.*)",
