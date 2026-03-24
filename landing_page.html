@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>LearnWithLore | The Electric Scholar</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100;300;400;500;600;700;800;900&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#0055FF",
+            "surface-tint": "#004be3",
+            "tertiary-fixed": "#ff9560",
+            "surface-dim": "#c9d6e0",
+            "surface-variant": "#d2dee8",
+            "on-tertiary-container": "#571f00",
+            "tertiary-dim": "#893600",
+            "surface-container-lowest": "#ffffff",
+            "on-error-container": "#510017",
+            "error": "#b41340",
+            "primary-container": "#819bff",
+            "on-tertiary-fixed": "#2f0e00",
+            "on-primary-fixed": "#000000",
+            "on-error": "#ffefef",
+            "tertiary-container": "#ff9560",
+            "tertiary": "#9c3f00",
+            "on-primary-fixed-variant": "#002376",
+            "secondary-container": "#26e6ff",
+            "on-tertiary-fixed-variant": "#652600",
+            "primary-fixed-dim": "#6c8cff",
+            "secondary-fixed": "#26e6ff",
+            "primary-dim": "#0041c8",
+            "inverse-surface": "#070f14",
+            "tertiary-fixed-dim": "#ff7f39",
+            "on-secondary-fixed": "#003a42",
+            "on-secondary-fixed-variant": "#005964",
+            "on-surface": "#283035",
+            "surface-container": "#dfeaf2",
+            "on-primary-container": "#001b61",
+            "primary-fixed": "#819bff",
+            "on-tertiary": "#fff0ea",
+            "surface-container-high": "#d9e4ed",
+            "on-background": "#283035",
+            "on-secondary-container": "#004f59",
+            "secondary": "#006571",
+            "outline": "#70787e",
+            "on-primary": "#f2f1ff",
+            "on-surface-variant": "#545d62",
+            "secondary-fixed-dim": "#00d7f0",
+            "inverse-primary": "#6889ff",
+            "inverse-on-surface": "#969ea4",
+            "outline-variant": "#a6aeb5",
+            "background": "#eff7fe",
+            "surface-bright": "#eff7fe",
+            "error-container": "#f74b6d",
+            "surface-container-low": "#e9f2fa",
+            "surface-container-highest": "#d2dee8",
+            "surface": "#eff7fe",
+            "secondary-dim": "#005863",
+            "on-secondary": "#d8f8ff",
+            "error-dim": "#a70138"
+          },
+          fontFamily: {
+            "headline": ["Lexend"],
+            "body": ["Lexend"],
+            "label": ["Lexend"]
+          },
+          borderRadius: {
+            "DEFAULT": "1rem",
+            "lg": "2rem",
+            "xl": "3rem",
+            "2xl": "2.5rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+
+    .glass-pane {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1.5px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .mesh-bg {
+      background-color: #eff7fe;
+      background-image:
+        radial-gradient(at 0% 0%, hsla(210, 100%, 90%, 1) 0, transparent 50%),
+        radial-gradient(at 50% 0%, hsla(200, 100%, 85%, 1) 0, transparent 50%),
+        radial-gradient(at 100% 0%, hsla(190, 100%, 92%, 1) 0, transparent 50%);
+    }
+
+    .neon-border {
+      position: relative;
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .neon-border::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      z-index: -1;
+      background: linear-gradient(45deg, #0055FF, #26e6ff, #0055FF);
+      background-size: 200% 200%;
+      animation: neonFlow 3s linear infinite;
+      border-radius: inherit;
+    }
+
+    @keyframes neonFlow {
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    .dots-pattern {
+      background-image: radial-gradient(rgba(255, 255, 255, 0.2) 2px, transparent 2px);
+      background-size: 32px 32px;
+    }
+  </style>
+</head>
+
+<body
+  class="bg-surface font-body text-on-surface selection:bg-secondary-container selection:text-on-secondary-container mesh-bg min-h-screen">
+  <!-- Top Navigation Shell -->
+  <header
+    class="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-8 py-3 rounded-full mt-4 mx-auto max-w-5xl border-2 border-white/20 bg-white/80 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,75,227,0.15)]">
+    <div class="text-2xl font-black text-primary tracking-tighter font-headline">LearnWithLore</div>
+    <nav class="hidden md:flex gap-8 items-center">
+      <a class="text-primary font-extrabold border-b-2 border-cyan-400 pb-1 font-['Lexend'] font-semibold tracking-tight"
+        href="#">Courses</a>
+      <a class="text-slate-600 hover:text-primary transition-colors font-['Lexend'] font-semibold tracking-tight"
+        href="#">Library</a>
+      <a class="text-slate-600 hover:text-primary transition-colors font-['Lexend'] font-semibold tracking-tight"
+        href="#">Pricing</a>
+      <a class="text-slate-600 hover:text-primary transition-colors font-['Lexend'] font-semibold tracking-tight"
+        href="#">Lore-Plus</a>
+    </nav>
+    <button
+      class="bg-primary text-on-primary px-6 py-2 rounded-full font-bold hover:scale-105 transition-all duration-300 shadow-lg shadow-primary/20">Get
+      Started</button>
+  </header>
+  <main class="pt-32">
+    <!-- Hero Section: PRESERVED EXACTLY AS IS -->
+    <section class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center mb-24 lg:mb-40">
+      <div class="z-10">
+        <span
+          class="inline-block px-4 py-1 rounded-full bg-secondary-container/30 backdrop-blur-md text-secondary font-bold text-xs uppercase tracking-widest mb-6">Mastery
+          through Lore</span>
+        <h1 class="font-headline font-black text-5xl lg:text-7xl text-on-surface leading-[1.1] tracking-tighter mb-6">
+          Master English with a <span class="text-primary italic">Personal Tutor</span>
+        </h1>
+        <p class="text-lg text-on-surface-variant max-w-md mb-10 leading-relaxed">
+          Master global job opportunities through our personalized and highly effective approach. Results in weeks, not
+          years!
+        </p>
+        <div class="flex flex-wrap gap-4">
+          <button
+            class="bg-primary text-on-primary px-8 py-4 rounded-full font-bold text-lg hover:shadow-[0_0_30px_rgba(0,75,227,0.4)] transition-all">Book
+            a Free Lesson</button>
+          <button
+            class="glass-pane px-8 py-4 rounded-full font-bold text-lg text-primary border-primary/20 hover:bg-white/90 transition-all">View
+            Testimonials</button>
+        </div>
+      </div>
+      <div class="relative flex justify-center items-center">
+        <!-- Decorative Elements -->
+        <div class="absolute w-96 h-96 bg-primary-container/20 rounded-full blur-3xl -z-10"></div>
+        <div class="absolute w-64 h-64 bg-secondary-container/30 rounded-full blur-3xl bottom-0 right-0 -z-10"></div>
+        <div class="relative group">
+          <div
+            class="absolute -inset-4 bg-white/40 backdrop-blur-xl rounded-xl border border-white/50 transform rotate-3 group-hover:rotate-1 transition-transform duration-500 shadow-xl">
+          </div>
+          <div
+            class="relative overflow-hidden rounded-xl border-4 border-white shadow-2xl w-full max-w-md aspect-[4/5] bg-surface-container">
+            <img alt="Professional woman smiling" class="w-full h-full object-cover"
+              data-alt="Professional woman with glasses and brown hair, arms crossed, smiling warmly"
+              src="https://lh3.googleusercontent.com/aida/ADBb0uhntxpP79eqEvRgJ7WFVglBqku_NLlXFib9OFanCdmpWD0d5WSAbVCzWBV5nP52KWRrCTxxqc5xySyU08P341LLJZlKHY44v_rGNYF7MS3DfvBtUWqQ-FQ4yOgFp0k5yFs9a6z-PSrp_WDrQkxwBb2tl4HzsyBjCGL6cCj0-5RRNk-b_YP-sgLLeHWro_QQOSPlshBlY51uj17Ejh0cPHypbZ9_FfCjlhXgnZ2PQnGsyJSljtcVF7gsYtusXQW9BHuyQu4vuHT6oQ" />
+          </div>
+          <!-- Stats Floating Card -->
+          <div class="absolute -bottom-6 -left-10 glass-pane p-6 rounded-xl shadow-2xl max-w-[200px]">
+            <div class="flex items-center gap-3 mb-2">
+              <span
+                class="material-symbols-outlined text-tertiary bg-tertiary-container/30 p-2 rounded-full">auto_stories</span>
+              <span class="font-bold text-2xl">500+</span>
+            </div>
+            <p class="text-xs font-semibold uppercase text-on-surface-variant tracking-wider">Lessons Completed This
+              Month</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Why Learn with Lore (Benefits) -->
+    <section class="max-w-7xl mx-auto px-6 mb-40">
+      <div class="grid lg:grid-cols-12 gap-8 items-center">
+        <div class="lg:col-span-5 mb-12 lg:mb-0 lg:order-last">
+          <h2 class="font-headline font-black text-4xl lg:text-6xl tracking-tighter leading-none mb-8">Elevate your
+            English <br /><span class="text-primary">beyond boundaries.</span></h2>
+          <div class="space-y-12">
+            <div class="relative pl-16">
+              <span class="absolute left-0 top-0 text-7xl font-black text-primary/10 leading-none select-none">01</span>
+              <h3 class="font-black text-2xl mb-2">Adaptive Learning</h3>
+              <p class="text-on-surface-variant leading-relaxed">Dynamic curriculums that evolve based on your
+                individual progress and speed.</p>
+            </div>
+            <div class="relative pl-16">
+              <span class="absolute left-0 top-0 text-7xl font-black text-primary/10 leading-none select-none">02</span>
+              <h3 class="font-black text-2xl mb-2">Accent Precision</h3>
+              <p class="text-on-surface-variant leading-relaxed">Specific phonetic coaching designed for Spanish
+                speakers to master English sounds.</p>
+            </div>
+          </div>
+        </div>
+        <div class="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-8 lg:order-first">
+          <div
+            class="bg-white/40 backdrop-blur-2xl p-10 rounded-2xl border border-white/60 shadow-[0_32px_64px_rgba(0,0,0,0.05)] transform translate-y-8 hover:-translate-y-2 transition-transform duration-500">
+            <div
+              class="w-16 h-16 rounded-2xl bg-primary shadow-[0_10px_30px_rgba(0,85,255,0.3)] flex items-center justify-center mb-8">
+              <span class="material-symbols-outlined text-4xl text-white"
+                style="font-variation-settings: 'FILL' 1;">schedule</span>
+            </div>
+            <h3 class="font-black text-2xl mb-4">Flex Schedule</h3>
+            <p class="text-on-surface-variant">Book or reschedule with 24h notice via our digital portal. Your time,
+              your rules.</p>
+          </div>
+          <div
+            class="bg-primary p-10 rounded-2xl shadow-[0_32px_64px_rgba(0,85,255,0.2)] text-white hover:-translate-y-2 transition-transform duration-500">
+            <div class="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center mb-8">
+              <span class="material-symbols-outlined text-4xl text-white"
+                style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+            </div>
+            <h3 class="font-black text-2xl mb-4">Certified Lore</h3>
+            <p class="opacity-80">Official accreditation recognized by partner institutions across Europe and Latin
+              America.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Real Stories (Bento Testimonials) -->
+    <section class="max-w-7xl mx-auto px-6 mb-40">
+      <div class="text-center mb-20">
+        <h2 class="font-headline font-black text-4xl lg:text-5xl tracking-tighter mb-4">The Scholar's Community</h2>
+        <p class="text-on-surface-variant text-lg">Real results from our global family of learners.</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:h-[600px]">
+        <!-- Main Bento Card: Modified to Solid Background -->
+        <div
+          class="md:col-span-2 relative group overflow-hidden rounded-2xl bg-[#E6F3FF] border border-primary/10 shadow-xl p-12 flex flex-col justify-end">
+          <div class="absolute top-12 left-12 opacity-10">
+            <span class="material-symbols-outlined text-primary text-9xl">format_quote</span>
+          </div>
+          <div class="relative z-10">
+            <div class="flex gap-1 mb-6 text-primary">
+              <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+              <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+              <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+              <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+              <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+            </div>
+            <p class="text-slate-900 text-3xl font-semibold leading-relaxed mb-10 max-w-xl italic">"The 1:1 sessions
+              completely changed my confidence during board meetings. The focus on business terminology was exactly what
+              I needed."</p>
+            <div class="flex items-center gap-4">
+              <div class="w-16 h-16 rounded-full border-2 border-primary/20 p-1 overflow-hidden bg-white">
+                <img alt="Alejandro" class="w-full h-full rounded-full object-cover"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuACJQhvdQV438yxg2CYCRZKcLGtyXnGCG1JNYN3X_BdSi9RdylPDlB4ExnFM_1v5t1s-avVSD0R29Fd18MMhQsyAxY7WULg5ZdikQCbLwuz4U76iSemPgoSeOyyZDlBKTlqJO1DtRhYanq61WXd8S83-ii2q92FKQ3F3TpVr1txN__sYMi67i4n98rWJCZRMI5pzofG0BMawR5HnAdF96uW6LoXf72RnkwjPZpnLzHaFeI74BoldPtmA1SJykzcXPfz15hGcd-PzOiY" />
+              </div>
+              <div>
+                <h4 class="text-slate-900 font-black text-lg">Alejandro M.</h4>
+                <p class="text-primary font-bold text-sm tracking-wide">Software Architect</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Side Bento Cards -->
+        <div class="flex flex-col gap-6">
+          <div
+            class="bg-white p-8 rounded-2xl border border-primary/10 shadow-lg flex-1 hover:shadow-xl transition-shadow">
+            <p class="text-on-surface mb-6 font-medium italic text-lg leading-relaxed">"Learning English used to feel
+              like a chore until Lore. Every lesson is an adventure."</p>
+            <div class="flex items-center gap-3">
+              <img alt="Sofia" class="w-12 h-12 rounded-full object-cover"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDihtE1LoF81z3zgwh84g0yetd8IrlcTwuqhvi1WWO0lyaTggVWAJs4p1AT_B4oGDPGYJe065AGaCK3pbHoTN5y0iyYWssxOsgy_lBdFF-45COlcG5EQxPyzZySNE7Q3GsLlmrG_eINCYYCIX5y90B-HcxDtKeVnhvVMjeFmK5TeTV196NYMmQ15TZvb9_Yb3qwfoy61BgT9XLoGoLErGAfiAb6Mqrkp6wt4EZtGWQ-vmNUJv7XXbVklJH-wsnxaVASDKupsIkmVP_6" />
+              <div>
+                <h4 class="font-bold text-slate-900">Sofia R.</h4>
+                <p class="text-primary text-xs font-bold uppercase tracking-wider">Marketing</p>
+              </div>
+            </div>
+          </div>
+          <div
+            class="bg-white p-8 rounded-2xl border border-primary/10 shadow-lg flex-1 hover:shadow-xl transition-shadow">
+            <p class="text-on-surface mb-6 font-medium italic text-lg leading-relaxed">"Passed my TOEFL in three months
+              with two weeks to spare. Incredible service!"</p>
+            <div class="flex items-center gap-3">
+              <img alt="Luis" class="w-12 h-12 rounded-full object-cover"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAyGOsKUCCl_2VSNbtHNCoVPJaKJdC4v-74mK5Bslk336vN3XeUV7K5tiWj3wfUtwOK9P03rQA2ZuLMasUqhm4UXEVDQXVMXndh7-qqmGdYInW91_TXfelY8KYuJ7HNLh-mvNrDH7VXACtrDiMEKkHxScWYzdgeSWIlmYTl6XJCKq9LbuV_kepwpBbqNOnI-58yV5AhT5nj2s1ymc7rgMURSjA9GyjX8KiTsh6XXPiZtxIh2OcIyY3yqQcel9JOR__C-_hn7BJtE5Mx" />
+              <div>
+                <h4 class="font-bold text-slate-900">Luis D.</h4>
+                <p class="text-primary text-xs font-bold uppercase tracking-wider">PhD Student</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Pricing (Premium Glass) -->
+    <section class="max-w-7xl mx-auto px-6 mb-40">
+      <div class="text-center mb-16">
+        <span class="text-primary font-black uppercase tracking-[0.2em] text-xs">The Investment</span>
+        <h2 class="font-headline font-black text-4xl lg:text-5xl tracking-tighter mt-4 mb-4">Choose your journey</h2>
+        <p class="text-on-surface-variant">Simple, transparent pricing for every stage.</p>
+      </div>
+      <div class="grid md:grid-cols-3 gap-8 items-end">
+        <!-- Basic -->
+        <div
+          class="glass-pane p-12 rounded-2xl flex flex-col items-center text-center hover:scale-[1.02] transition-all border-none">
+          <h3 class="font-bold text-lg mb-4 text-slate-500 uppercase tracking-widest">Introduction</h3>
+          <div class="text-6xl font-[800] mb-8 text-slate-900 font-headline">$0<span
+              class="text-lg font-normal text-on-surface-variant">/trial</span></div>
+          <ul class="space-y-6 mb-12 flex-grow text-on-surface-variant font-medium">
+            <li class="flex items-center gap-3"><span
+                class="material-symbols-outlined text-secondary font-bold">check_circle</span> 1x 30min Evaluation</li>
+            <li class="flex items-center gap-3"><span
+                class="material-symbols-outlined text-secondary font-bold">check_circle</span> Personal Roadmap</li>
+          </ul>
+          <button class="w-full bg-slate-900 text-white py-5 rounded-xl font-bold hover:shadow-xl transition-all">Claim
+            Free Lesson</button>
+        </div>
+        <!-- Scholar (Modern & Cleaned Up) -->
+        <div
+          class="bg-white p-12 rounded-3xl flex flex-col items-center text-center shadow-[0_40px_100px_rgba(0,85,255,0.08)] scale-110 z-10 border-2 border-primary/10 relative overflow-hidden group">
+          <div class="absolute inset-0 bg-primary/[0.02] pointer-events-none"></div>
+          <div
+            class="absolute -top-5 left-1/2 -translate-x-1/2 bg-primary text-white px-8 py-2 rounded-full text-xs font-black uppercase tracking-tight shadow-lg shadow-primary/30 z-20">
+            Most Popular</div>
+          <h3 class="font-bold text-lg mb-4 text-primary uppercase tracking-widest relative z-10">Scholar</h3>
+          <div class="text-7xl font-[800] mb-8 text-primary font-headline relative z-10">$20<span
+              class="text-lg font-normal text-on-surface-variant">/hr</span></div>
+          <ul class="space-y-6 mb-12 flex-grow text-slate-700 font-semibold relative z-10">
+            <li class="flex items-center gap-3"><span
+                class="material-symbols-outlined text-primary font-bold">check_circle</span> 1:1 Personal Sessions</li>
+            <li class="flex items-center gap-3"><span
+                class="material-symbols-outlined text-primary font-bold">check_circle</span> Full Library Access</li>
+            <li class="flex items-center gap-3"><span
+                class="material-symbols-outlined text-primary font-bold">check_circle</span> AI-Powered Feedback</li>
+          </ul>
+          <button
+            class="w-full bg-primary text-white py-6 rounded-xl font-black text-lg shadow-[0_15px_40px_rgba(0,85,255,0.2)] hover:shadow-primary/40 transition-all relative z-10">Go
+            Pro</button>
+        </div>
+        <!-- Elite -->
+        <div
+          class="glass-pane p-12 rounded-2xl flex flex-col items-center text-center hover:scale-[1.02] transition-all border-none">
+          <h3 class="font-bold text-lg mb-4 text-slate-500 uppercase tracking-widest">Elite</h3>
+          <div class="text-6xl font-[800] mb-8 text-slate-900 font-headline">$35<span
+              class="text-lg font-normal text-on-surface-variant">/hr</span></div>
+          <ul class="space-y-6 mb-12 flex-grow text-on-surface-variant font-medium">
+            <li class="flex items-center gap-3"><span
+                class="material-symbols-outlined text-secondary font-bold">check_circle</span> Senior Lore Master</li>
+            <li class="flex items-center gap-3"><span
+                class="material-symbols-outlined text-secondary font-bold">check_circle</span> Priority Support</li>
+            <li class="flex items-center gap-3"><span
+                class="material-symbols-outlined text-secondary font-bold">check_circle</span> Career Mentorship</li>
+          </ul>
+          <button class="w-full bg-slate-900 text-white py-5 rounded-xl font-bold hover:shadow-xl transition-all">Select
+            Elite</button>
+        </div>
+      </div>
+    </section>
+    <!-- Final CTA: Redesigned with depth and patterns -->
+    <section class="max-w-7xl mx-auto px-6 mb-32">
+      <div
+        class="relative bg-primary min-h-[500px] flex items-center justify-center rounded-[3rem] overflow-hidden shadow-[0_60px_100px_rgba(0,85,255,0.25)] border border-white/10 group">
+        <!-- Animated Background Depth -->
+        <div class="absolute inset-0 dots-pattern opacity-10"></div>
+        <div
+          class="absolute -top-24 -left-24 w-96 h-96 bg-secondary-container/20 rounded-full blur-[100px] group-hover:scale-110 transition-transform duration-1000">
+        </div>
+        <div
+          class="absolute -bottom-24 -right-24 w-[30rem] h-[30rem] bg-surface-tint/30 rounded-full blur-[100px] group-hover:scale-110 transition-transform duration-1000">
+        </div>
+        <!-- Glassmorphic floating shapes -->
+        <div
+          class="absolute top-20 right-20 w-32 h-32 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 rotate-12 group-hover:rotate-45 transition-transform duration-1000">
+        </div>
+        <div
+          class="absolute bottom-20 left-40 w-24 h-24 bg-white/5 backdrop-blur-lg rounded-full border border-white/10 -rotate-12 group-hover:-translate-y-12 transition-transform duration-1000">
+        </div>
+        <div class="relative z-10 text-center px-6 py-20">
+          <h2 class="font-headline font-black text-5xl lg:text-8xl text-white mb-8 tracking-tighter leading-[0.9]">Your
+            future in English <br /><span class="text-secondary-container">starts today.</span></h2>
+          <p class="text-xl lg:text-2xl text-white/80 mb-14 max-w-3xl mx-auto font-medium leading-relaxed">Join 10,000+
+            Spanish speakers who have transformed their careers with LearnWithLore's proprietary Electric Scholar
+            method.</p>
+          <div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
+            <button
+              class="bg-white text-primary px-16 py-6 rounded-2xl font-black text-2xl hover:scale-105 hover:shadow-[0_20px_60px_rgba(255,255,255,0.3)] transition-all">Start
+              Free Trial</button>
+            <a class="text-white/80 hover:text-white font-bold text-lg flex items-center gap-2 group/link" href="#">
+              Talk to an Advisor
+              <span
+                class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <!-- Massive & Bold Footer -->
+  <footer class="bg-white pt-32 pb-16 overflow-hidden relative">
+    <div
+      class="absolute top-0 left-1/2 -translate-x-1/2 w-full text-[15vw] font-black text-primary/[0.03] select-none leading-none pointer-events-none translate-y-12">
+      LEARNWITHLORE
+    </div>
+    <div class="max-w-7xl mx-auto px-6 relative z-10">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-16 mb-24">
+        <div class="lg:col-span-5">
+          <div class="text-3xl font-black text-primary mb-8">LearnWithLore</div>
+          <p class="text-xl text-on-surface-variant leading-relaxed max-w-sm font-medium">
+            The premium destination for Spanish speakers aiming for mastery in the English language.
+          </p>
+          <div class="flex gap-4 mt-10">
+            <a class="w-12 h-12 rounded-full glass-pane flex items-center justify-center hover:bg-primary hover:text-white transition-all border-slate-200"
+              href="#"><span class="material-symbols-outlined">language</span></a>
+            <a class="w-12 h-12 rounded-full glass-pane flex items-center justify-center hover:bg-primary hover:text-white transition-all border-slate-200"
+              href="#"><span class="material-symbols-outlined">person</span></a>
+            <a class="w-12 h-12 rounded-full glass-pane flex items-center justify-center hover:bg-primary hover:text-white transition-all border-slate-200"
+              href="#"><span class="material-symbols-outlined">share</span></a>
+          </div>
+        </div>
+        <div class="lg:col-span-7 grid grid-cols-2 md:grid-cols-3 gap-12">
+          <div class="space-y-6">
+            <h5 class="font-black uppercase tracking-widest text-xs text-primary">Platform</h5>
+            <nav class="flex flex-col gap-4">
+              <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="#">Our Story</a>
+              <a class="text-on-surface-variant hover:text-primary transition-colors font-medium"
+                href="#">Curriculum</a>
+              <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="#">Lore
+                Library</a>
+              <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="#">Lore Plus</a>
+            </nav>
+          </div>
+          <div class="space-y-6">
+            <h5 class="font-black uppercase tracking-widest text-xs text-primary">Community</h5>
+            <nav class="flex flex-col gap-4">
+              <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="#">Success
+                Stories</a>
+              <a class="text-on-surface-variant hover:text-primary transition-colors font-medium"
+                href="#">Affiliates</a>
+              <a class="text-on-surface-variant hover:text-primary transition-colors font-medium"
+                href="#">Newsletter</a>
+              <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="#">Podcast</a>
+            </nav>
+          </div>
+          <div class="space-y-6">
+            <h5 class="font-black uppercase tracking-widest text-xs text-primary">Support</h5>
+            <nav class="flex flex-col gap-4">
+              <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="#">Help
+                Center</a>
+              <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="#">Privacy</a>
+              <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="#">Terms</a>
+              <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="#">Contact</a>
+            </nav>
+          </div>
+        </div>
+      </div>
+      <div class="pt-12 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
+        <p class="text-slate-400 font-medium text-sm">© 2024 LearnWithLore. All rights reserved.</p>
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+          <span class="text-slate-400 font-medium text-sm">Systems Operational</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+</body>
+
+</html>

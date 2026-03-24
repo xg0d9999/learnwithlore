@@ -25,6 +25,8 @@ import AdminLessonsList from './features/admin/AdminLessonsList';
 import ExerciseCorrections from './features/admin/ExerciseCorrections';
 import AdminCalendar from './features/calendar/AdminCalendar.tsx';
 import StudentCalendar from './features/calendar/StudentCalendar.tsx';
+import LandingPage from './features/landing/LandingPage';
+import AboutPage from './features/landing/AboutPage';
 import { AuthProvider } from './context/AuthProvider';
 import { useAuth } from './context/AuthContext';
 import { Toaster } from 'sonner';
@@ -87,7 +89,8 @@ function App() {
       <FloatingCallManager />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/about" element={<AboutPage />} />
 
           {/* Auth Routes */}
           <Route element={<AuthLayout />}>
