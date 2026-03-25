@@ -2,8 +2,8 @@
 
 const API_KEY = import.meta.env.VITE_GOOGLE_DRIVE_API_KEY;
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_DRIVE_CLIENT_ID;
-const DISCOVERY_DOCS = [import.meta.env.VITE_GOOGLE_DRIVE_DISCOVERY_DOC];
-const SCOPES = import.meta.env.VITE_GOOGLE_DRIVE_SCOPES;
+const DISCOVERY_DOCS = [import.meta.env.VITE_GOOGLE_DRIVE_DISCOVERY_DOC || 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
+const SCOPES = import.meta.env.VITE_GOOGLE_DRIVE_SCOPES || 'https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/drive.readonly';
 
 let gapiInitialized = false;
 let tokenClient: any = null;
