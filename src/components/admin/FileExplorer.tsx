@@ -364,8 +364,16 @@ const FileExplorer: React.FC = () => {
               </button>
               <button 
                 onClick={() => {
-                  setTaggingLevels([]);
-                  setTaggingLangs([]);
+                  if (selectedFiles.size === 1) {
+                    const fileId = Array.from(selectedFiles)[0];
+                    const file = files.find(f => f.id === fileId);
+                    const existing = parseTags(file?.description);
+                    setTaggingLevels(existing.levels || []);
+                    setTaggingLangs(existing.langs || []);
+                  } else {
+                    setTaggingLevels([]);
+                    setTaggingLangs([]);
+                  }
                   setShowTagModal(true);
                 }} 
                 title="Etiquetar (Nivel/Idioma)" 
@@ -647,7 +655,7 @@ const FileExplorer: React.FC = () => {
               </div>
 
               <div className="space-y-3">
-                <label className="text-xs font-black uppercase text-slate-400 tracking-widest">Idiomas</label>
+                <label className="text-xs font-black uppercase text-slate-400 tracking-widest">Idiomas (Selecciona varios)</label>
                 <div className="flex flex-wrap gap-2">
                   {['English', 'Spanish'].map(lang => (
                     <button 

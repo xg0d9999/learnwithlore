@@ -340,27 +340,43 @@ export default function StudentExercises() {
                                         <div className="flex items-center gap-4 p-5 rounded-2xl bg-slate-50 border border-slate-200 shadow-sm relative overflow-hidden group">
                                             <div className="size-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary relative z-10">
                                                 <span className="material-symbols-outlined text-3xl">
-                                                    {currentBlock.content.fileType?.includes('pdf') ? 'picture_as_pdf' : 'image'}
+                                                    {currentBlock.content.fileType?.includes('pdf') ? 'picture_as_pdf' : 
+                                                     currentBlock.content.fileType?.includes('image') ? 'image' : 
+                                                     currentBlock.content.fileType?.includes('video') ? 'movie' : 'description'}
                                                 </span>
                                             </div>
                                             <div className="flex-1 min-w-0 relative z-10">
                                                 <h3 className="text-lg font-black text-slate-900 truncate">
-                                                    {currentBlock.content.fileName || 'Material de Teoría'}
+                                                    {currentBlock.content.fileName || 'Material de Clase'}
                                                 </h3>
                                                 <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">
-                                                    {currentBlock.content.fileType?.split('/')[1] || 'DOCUMENTO'} • {(currentBlock.content.size / 1024 / 1024).toFixed(2)} MB
+                                                    {currentBlock.content.fileType?.split('/')[1]?.toUpperCase() || 'DOCUMENTO'} 
+                                                    {currentBlock.content.size ? ` • ${(currentBlock.content.size / 1024 / 1024).toFixed(2)} MB` : ''}
                                                 </p>
                                             </div>
-                                            <a href={currentBlock.content.url} target="_blank" rel="noopener noreferrer" className="bg-white text-slate-900 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest border border-slate-200 shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2">
-                                                Ver / Descargar
-                                                <span className="material-symbols-outlined text-sm">open_in_new</span>
-                                            </a>
+                                            {!currentBlock.content.url?.includes('drive.google.com') && (
+                                                <a href={currentBlock.content.url} target="_blank" rel="noopener noreferrer" className="bg-white text-slate-900 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest border border-slate-200 shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2">
+                                                    Ver / Descargar
+                                                    <span className="material-symbols-outlined text-sm">open_in_new</span>
+                                                </a>
+                                            )}
                                         </div>
                                         <div className="rounded-3xl overflow-hidden border border-slate-200 bg-white shadow-2xl shadow-slate-200/50">
-                                            {currentBlock.content.fileType?.includes('pdf') ? (
-                                                <iframe src={`${currentBlock.content.url}#toolbar=0`} className="w-full h-[600px] border-none" title="Theory Document" />
+                                            {currentBlock.content.url?.includes('drive.google.com') ? (
+                                                <iframe 
+                                                    src={currentBlock.content.url} 
+                                                    className="w-full h-[600px] border-none" 
+                                                    title="Drive Preview"
+                                                    allow="autoplay"
+                                                />
                                             ) : (
-                                                <img src={currentBlock.content.url} alt="Theory" className="w-full h-auto max-h-[800px] object-contain" />
+                                                <>
+                                                    {currentBlock.content.fileType?.includes('pdf') ? (
+                                                        <iframe src={`${currentBlock.content.url}#toolbar=0`} className="w-full h-[600px] border-none" title="Theory Document" />
+                                                    ) : (
+                                                        <img src={currentBlock.content.url} alt="Theory" className="w-full h-auto max-h-[800px] object-contain" />
+                                                    )}
+                                                </>
                                             )}
                                         </div>
                                     </div>
@@ -375,7 +391,18 @@ export default function StudentExercises() {
                                             <h2 className="text-2xl font-bold text-slate-900 mb-1">Listen carefully</h2>
                                             <p className="text-sm text-slate-500 font-medium">Focus on pronunciation and context.</p>
                                         </div>
-                                        <audio controls src={currentBlock.content.url} className="w-full mt-4" />
+                                        {currentBlock.content.url?.includes('drive.google.com') ? (
+                                            <div className="w-full rounded-2xl overflow-hidden border border-slate-200 shadow-lg">
+                                                <iframe 
+                                                    src={currentBlock.content.url} 
+                                                    className="w-full h-[150px] border-none" 
+                                                    title="Audio Preview"
+                                                    allow="autoplay"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <audio controls src={currentBlock.content.url} className="w-full mt-4" />
+                                        )}
                                     </div>
                                 )}
 

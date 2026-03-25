@@ -187,10 +187,11 @@ export default function LessonBuilder() {
             const files = await listDriveFiles(folderId);
             setIsDriveAuthorized(true);
             
-            // Filter files if tagging metadata is present
+            // Filter files and folders if tagging metadata is present
             const filteredFiles = files.filter((file: any) => {
-                if (file.mimeType === 'application/vnd.google-apps.folder') return true;
-                if (!file.description) return false; // Per user request: "que me aparezca solo lo seleccionado"
+                // If the file/folder doesn't have a description, we don't show it 
+                // per user request: "Si la carpeta no tiene la etiqueta, no se verá"
+                if (!file.description) return false; 
                 
                 try {
                     const tags = JSON.parse(file.description);
@@ -245,19 +246,34 @@ export default function LessonBuilder() {
             script.src = 'https://accounts.google.com/gsi/client';
             script.onload = () => resolve();
             script.onerror = (err) => reject(err);
-            document.body.appendChild(script);
         });
     };
 
     const handleSelectDriveFile = (file: any) => {
         if (file.mimeType === 'application/vnd.google-apps.folder') {
             setDrivePath([...drivePath, { id: file.id, name: file.name }]);
-        } else {
-            updateBlockContent(showDriveSelector!, {
-                url: file.webViewLink || file.webContentLink,
-                fileName: file.name,
-                fileType: file.mimeType
-            });
+            loadDriveFiles(file.id);
+            return;
+        }
+
+        // Transform webViewLink to an embeddable preview link for students
+        // Normal webViewLink: https://drive.google.com/file/d/ID/view?usp=drivesdk
+        // Preview link: https://drive.google.com/file/d/ID/preview
+        let embedUrl = file.webViewLink || '';
+        if (file.id) {
+            embedUrl = `https://drive.google.com/file/d/${file.id}/preview`;
+        }
+
+        const blockData = {
+            url: embedUrl,
+            fileName: file.name,
+            fileType: file.mimeType,
+            size: parseInt(file.size || '0'),
+            driveId: file.id
+        };
+        
+        if (showDriveSelector) {
+            updateBlockContent(showDriveSelector, blockData);
             setShowDriveSelector(null);
         }
     };
