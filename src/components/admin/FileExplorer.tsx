@@ -21,7 +21,8 @@ import {
   CheckSquare,
   Square,
   X,
-  ExternalLink
+  ExternalLink,
+  Tag
 } from 'lucide-react';
 import { 
   loadGapiScript, 
@@ -33,7 +34,8 @@ import {
   uploadFile,
   deleteFile,
   renameFile,
-  duplicateFile
+  duplicateFile,
+  updateFileMetadata
 } from '../../services/googleDriveService';
 
 interface FileItem {
@@ -46,6 +48,7 @@ interface FileItem {
   webViewLink?: string;
   webContentLink?: string;
   iconLink?: string;
+  description?: string;
 }
 
 const FileExplorer: React.FC = () => {
@@ -62,6 +65,9 @@ const FileExplorer: React.FC = () => {
   const [newFileName, setNewFileName] = useState('');
   const [currentFilter, setCurrentFilter] = useState<{ id: string, name: string, query?: string, orderBy?: string }>({ id: 'root', name: 'Mi Unidad' });
   const [previewingFile, setPreviewingFile] = useState<FileItem | null>(null);
+  const [showTagModal, setShowTagModal] = useState(false);
+  const [taggingLevels, setTaggingLevels] = useState<string[]>([]);
+  const [taggingLangs, setTaggingLangs] = useState<string[]>([]);
 
   // Clear selection on path/filter/search change
   useEffect(() => setSelectedFiles(new Set()), [path, currentFilter, searchQuery]);
@@ -246,6 +252,33 @@ const FileExplorer: React.FC = () => {
     }
   };
 
+  const handleApplyTags = async () => {
+    if (selectedFiles.size === 0) return;
+    setLoading(true);
+    try {
+      const tagData = JSON.stringify({ levels: taggingLevels, langs: taggingLangs });
+      await Promise.all(Array.from(selectedFiles).map(id => 
+        updateFileMetadata(id, { description: tagData })
+      ));
+      setShowTagModal(false);
+      setSelectedFiles(new Set());
+      fetchFiles(currentFolder, currentFilter.query, currentFilter.orderBy);
+    } catch (err) {
+      setError('Error al aplicar etiquetas');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const parseTags = (description?: string) => {
+    if (!description) return { levels: [], langs: [] };
+    try {
+      return JSON.parse(description);
+    } catch (e) {
+      return { levels: [], langs: [] };
+    }
+  };
+
   const startRename = (file: FileItem, e: React.MouseEvent) => {
     e.stopPropagation();
     setRenamingFileId(file.id);
@@ -328,6 +361,17 @@ const FileExplorer: React.FC = () => {
               <span className="mr-2 hidden md:inline">{selectedFiles.size} seleccionados</span>
               <button onClick={handleDuplicate} title="Duplicar" className="p-1.5 hover:bg-primary/20 rounded-md transition-colors">
                 <Copy className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={() => {
+                  setTaggingLevels([]);
+                  setTaggingLangs([]);
+                  setShowTagModal(true);
+                }} 
+                title="Etiquetar (Nivel/Idioma)" 
+                className="p-1.5 hover:bg-primary/20 rounded-md transition-colors"
+              >
+                <Tag className="w-4 h-4" />
               </button>
               {selectedFiles.size === 1 && (
                 <button onClick={(e) => startRename(files.find(f => f.id === Array.from(selectedFiles)[0])!, e)} title="Renombrar" className="p-1.5 hover:bg-primary/20 rounded-md transition-colors">
@@ -485,9 +529,19 @@ const FileExplorer: React.FC = () => {
                           />
                         </form>
                       ) : (
-                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate pr-4">
-                          {file.name}
-                        </span>
+                        <div className="flex flex-col gap-0.5 flex-1 pr-4">
+                          <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">
+                            {file.name}
+                          </span>
+                          <div className="flex gap-1 overflow-hidden">
+                            {parseTags(file.description).levels.map((l: string) => (
+                              <span key={l} className="text-[9px] px-1.5 bg-primary/10 text-primary rounded-full font-bold uppercase">{l}</span>
+                            ))}
+                            {parseTags(file.description).langs.map((l: string) => (
+                              <span key={l} className="text-[9px] px-1.5 bg-amber-100 text-amber-700 rounded-full font-bold uppercase">{l}</span>
+                            ))}
+                          </div>
+                        </div>
                       )}
                     </div>
                     <div className="col-span-3 md:col-span-2 text-[11px] font-medium text-slate-500">
@@ -564,6 +618,58 @@ const FileExplorer: React.FC = () => {
                   Este archivo no soporta previsualización incrustada.
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Tagging Modal */}
+      {showTagModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-800">
+            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <h3 className="text-lg font-black text-slate-900 dark:text-white">Etiquetar Material</h3>
+              <button onClick={() => setShowTagModal(false)} className="text-slate-400 hover:text-slate-600"><X /></button>
+            </div>
+            <div className="p-6 space-y-6">
+              <div className="space-y-3">
+                <label className="text-xs font-black uppercase text-slate-400 tracking-widest">Niveles (Selecciona varios)</label>
+                <div className="flex flex-wrap gap-2">
+                  {['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].map(lvl => (
+                    <button 
+                      key={lvl}
+                      onClick={() => taggingLevels.includes(lvl) ? setTaggingLevels(taggingLevels.filter(l => l !== lvl)) : setTaggingLevels([...taggingLevels, lvl])}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${taggingLevels.includes(lvl) ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                    >
+                      {lvl}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-xs font-black uppercase text-slate-400 tracking-widest">Idiomas</label>
+                <div className="flex flex-wrap gap-2">
+                  {['English', 'Spanish'].map(lang => (
+                    <button 
+                      key={lang}
+                      onClick={() => taggingLangs.includes(lang) ? setTaggingLangs(taggingLangs.filter(l => l !== lang)) : setTaggingLangs([...taggingLangs, lang])}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${taggingLangs.includes(lang) ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                    >
+                      {lang === 'English' ? '🇺🇸 English' : '🇪🇸 Español'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="p-6 bg-slate-50 dark:bg-slate-800/50 flex gap-3">
+              <button onClick={() => setShowTagModal(false)} className="flex-1 px-4 py-3 rounded-2xl font-bold text-slate-600 hover:bg-slate-200 transition-all">Cancelar</button>
+              <button 
+                onClick={handleApplyTags} 
+                className="flex-1 px-4 py-3 bg-primary text-white rounded-2xl font-black hover:shadow-xl hover:shadow-primary/30 transition-all disabled:opacity-50"
+                disabled={loading}
+              >
+                {loading ? 'Aplicando...' : 'Guardar Etiquetas'}
+              </button>
             </div>
           </div>
         </div>

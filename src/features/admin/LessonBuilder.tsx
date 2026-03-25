@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { toast } from 'sonner';
-import { listDriveFiles, initializeGapiClient } from '../../services/googleDriveService';
+import { listDriveFiles, initializeGapiClient, loadGapiScript } from '../../services/googleDriveService';
 
 const FREE_MODELS = [
     "nvidia/nemotron-3-super-120b-a12b:free"
@@ -41,6 +41,7 @@ interface Lesson {
     category: string;
     duration: string;
     image_url: string;
+    language: string;
     writing_location?: string;
     writing_task?: string;
     writing_requirements?: string;
@@ -129,6 +130,7 @@ export default function LessonBuilder() {
                 category: 'grammar',
                 duration: '15 Minutes',
                 image_url: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&q=80&w=800',
+                language: 'English',
                 writing_location: '',
                 writing_task: '',
                 writing_requirements: ''
@@ -164,11 +166,28 @@ export default function LessonBuilder() {
     const loadDriveFiles = async (folderId: string) => {
         setLoadingDrive(true);
         try {
+            await loadGapiScript();
             if (!window.gapi?.client?.drive) {
                 await initializeGapiClient();
             }
             const files = await listDriveFiles(folderId);
-            setDriveFiles(files);
+            
+            // Filter files if tagging metadata is present
+            const filteredFiles = files.filter((file: any) => {
+                if (file.mimeType === 'application/vnd.google-apps.folder') return true;
+                if (!file.description) return false; // Per user request: "que me aparezca solo lo seleccionado"
+                
+                try {
+                    const tags = JSON.parse(file.description);
+                    const levelMatch = !lesson?.level || tags.levels?.includes(lesson.level);
+                    const langMatch = !lesson?.language || tags.langs?.includes(lesson.language);
+                    return levelMatch && langMatch;
+                } catch (e) {
+                    return false;
+                }
+            });
+
+            setDriveFiles(filteredFiles);
         } catch (err) {
             console.error('Error loading drive files:', err);
             toast.error('Error al conectar con Google Drive');
@@ -867,7 +886,26 @@ export default function LessonBuilder() {
                                     className="w-full"
                                     value={lesson?.level}
                                     onChange={e => setLesson({ ...lesson!, level: e.target.value })}
-                                    options={['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].map(lv => ({ value: lv, label: lv }))}
+                                    options={[
+                                        { value: 'A1', label: 'Nivel A1' },
+                                        { value: 'A2', label: 'Nivel A2' },
+                                        { value: 'B1', label: 'Nivel B1' },
+                                        { value: 'B2', label: 'Nivel B2' },
+                                        { value: 'C1', label: 'Nivel C1' },
+                                        { value: 'C2', label: 'Nivel C2' },
+                                    ]}
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Idioma</span>
+                                <Select
+                                    className="w-full !h-10"
+                                    value={lesson?.language || 'English'}
+                                    onChange={e => setLesson({ ...lesson!, language: e.target.value })}
+                                    options={[
+                                        { value: 'English', label: '🇺🇸 English' },
+                                        { value: 'Spanish', label: '🇪🇸 Español' },
+                                    ]}
                                 />
                             </div>
                             <div className="space-y-1">
@@ -1038,6 +1076,7 @@ export default function LessonBuilder() {
                                                         
                                                         toast.loading('Cargando Google Drive...', { id: 'gdrive-load' });
                                                         try {
+                                                            await loadGapiScript();
                                                             if (!window.gapi?.client?.drive) {
                                                                 await initializeGapiClient();
                                                             }

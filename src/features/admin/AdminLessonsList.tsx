@@ -11,6 +11,7 @@ interface Lesson {
     description: string;
     category: string;
     level: string;
+    language?: string;
     duration: string;
     image_url: string;
     created_at: string;
@@ -124,6 +125,9 @@ export default function AdminLessonsList() {
                                 <div className="flex gap-2 mb-2">
                                     <Badge variant="primary" className="shadow-lg backdrop-blur-md bg-primary/90 border-0">{lesson.level}</Badge>
                                     <Badge variant="neutral" className="shadow-lg backdrop-blur-md bg-white/20 text-white border-0">{lesson.category}</Badge>
+                                    {lesson.language && (
+                                        <Badge variant="neutral" className="shadow-lg backdrop-blur-md bg-amber-500/80 text-white border-0">{lesson.language}</Badge>
+                                    )}
                                 </div>
                                 <h3 className="text-xl font-bold text-white mb-0.5 line-clamp-1">{lesson.title}</h3>
                             </div>

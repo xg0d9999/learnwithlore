@@ -82,13 +82,29 @@ export const listDriveFiles = async (folderId: string = 'root', customQuery?: st
     const q = customQuery !== undefined ? customQuery : `'${folderId}' in parents and trashed = false`;
     const response = await window.gapi.client.drive.files.list({
       pageSize: 50,
-      fields: 'nextPageToken, files(id, name, mimeType, size, modifiedTime, thumbnailLink, webViewLink, webContentLink, iconLink)',
+      fields: 'nextPageToken, files(id, name, mimeType, size, modifiedTime, thumbnailLink, webViewLink, webContentLink, iconLink, description)',
       q,
       orderBy,
     });
     return response?.result?.files || [];
   } catch (err) {
     console.error('Error listing files:', err);
+    throw err;
+  }
+};
+
+export const updateFileMetadata = async (fileId: string, metadata: { description?: string; name?: string }) => {
+  try {
+    if (!window.gapi?.client?.drive) {
+      throw new Error('Google Drive API not loaded');
+    }
+    const response = await window.gapi.client.drive.files.update({
+      fileId,
+      resource: metadata,
+    });
+    return response.result;
+  } catch (err) {
+    console.error('Error updating metadata:', err);
     throw err;
   }
 };
@@ -103,7 +119,7 @@ export const searchDriveFiles = async (query: string, folderId: string = 'root')
     const folderFilter = folderId !== 'root' ? ` and '${folderId}' in parents` : '';
     const response = await window.gapi.client.drive.files.list({
       pageSize: 50,
-      fields: 'nextPageToken, files(id, name, mimeType, size, modifiedTime, thumbnailLink, webViewLink, webContentLink, iconLink)',
+      fields: 'nextPageToken, files(id, name, mimeType, size, modifiedTime, thumbnailLink, webViewLink, webContentLink, iconLink, description)',
       q: `name contains '${query}' and trashed = false${folderFilter}`,
       orderBy: 'folder,name',
     });
