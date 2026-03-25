@@ -69,13 +69,17 @@ export const initializeTokenClient = (onTokenResponse: (resp: any) => void) => {
 
 export const listDriveFiles = async (folderId: string = 'root') => {
   try {
+    if (!window.gapi?.client?.drive) {
+      console.error('Google Drive API not loaded');
+      return [];
+    }
     const response = await window.gapi.client.drive.files.list({
       pageSize: 30,
       fields: 'nextPageToken, files(id, name, mimeType, size, modifiedTime, thumbnailLink)',
       q: `'${folderId}' in parents and trashed = false`,
       orderBy: 'folder,name',
     });
-    return response.result.files;
+    return response?.result?.files || [];
   } catch (err) {
     console.error('Error listing files:', err);
     throw err;
@@ -84,13 +88,17 @@ export const listDriveFiles = async (folderId: string = 'root') => {
 
 export const searchDriveFiles = async (query: string) => {
   try {
+    if (!window.gapi?.client?.drive) {
+      console.error('Google Drive API not loaded');
+      return [];
+    }
     const response = await window.gapi.client.drive.files.list({
       pageSize: 30,
       fields: 'nextPageToken, files(id, name, mimeType, size, modifiedTime, thumbnailLink)',
       q: `name contains '${query}' and trashed = false`,
       orderBy: 'folder,name',
     });
-    return response.result.files;
+    return response?.result?.files || [];
   } catch (err) {
     console.error('Error searching files:', err);
     throw err;
