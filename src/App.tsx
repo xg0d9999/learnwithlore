@@ -23,6 +23,7 @@ import AIMagicCreator from './features/admin/AIMagicCreator';
 import AdminMessaging from './features/admin/AdminMessaging';
 import AdminLessonsList from './features/admin/AdminLessonsList';
 import ExerciseCorrections from './features/admin/ExerciseCorrections';
+import AdminFiles from './features/admin/AdminFiles';
 import AdminCalendar from './features/calendar/AdminCalendar.tsx';
 import StudentCalendar from './features/calendar/StudentCalendar.tsx';
 import LandingPage from './features/landing/LandingPage';
@@ -128,6 +129,7 @@ function App() {
             <Route path="/admin/asignaciones" element={<AdminLessonsList />} />
             <Route path="/admin/students" element={<AdminStudentsList />} />
             <Route path="/admin/corrections" element={<ExerciseCorrections />} />
+            <Route path="/admin/files" element={<AdminFiles />} />
             <Route path="/admin/students/:id" element={<StudentProgress />} />
             <Route path="/admin/builder/manual" element={<Navigate to="/admin/builder/manual/new" replace />} />
             <Route path="/admin/builder/manual/:id" element={<LessonBuilder />} />

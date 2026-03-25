@@ -75,6 +75,11 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                     <span className="material-symbols-outlined">group</span>
                     <span className="text-sm font-medium">Alumnos</span>
                 </NavLink>
+                
+                <NavLink to="/admin/files" className={navLinkClass} onClick={() => window.innerWidth < 1024 && onClose?.()}>
+                    <span className="material-symbols-outlined">folder_open</span>
+                    <span className="text-sm font-medium">Archivos</span>
+                </NavLink>
 
                 <NavLink to="/admin/builder/manual/new" className={navLinkClass} onClick={() => window.innerWidth < 1024 && onClose?.()}>
                     <span className="material-symbols-outlined">edit_note</span>
