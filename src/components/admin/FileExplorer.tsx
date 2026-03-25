@@ -4,10 +4,8 @@ import {
   File, 
   FileText, 
   Image as ImageIcon, 
-  MoreVertical, 
   Search, 
   ChevronRight, 
-  Plus,
   HardDrive,
   Clock,
   Star,
@@ -15,7 +13,13 @@ import {
   Share2,
   RefreshCw,
   LogOut,
-  AlertCircle
+  AlertCircle,
+  Upload,
+  Copy,
+  Edit2,
+  Eye,
+  CheckSquare,
+  Square
 } from 'lucide-react';
 import { 
   loadGapiScript, 
@@ -23,7 +27,11 @@ import {
   initializeGapiClient, 
   initializeTokenClient, 
   listDriveFiles, 
-  searchDriveFiles 
+  searchDriveFiles,
+  uploadFile,
+  deleteFile,
+  renameFile,
+  duplicateFile
 } from '../../services/googleDriveService';
 
 interface FileItem {
@@ -32,6 +40,10 @@ interface FileItem {
   mimeType: string;
   size?: string;
   modifiedTime: string;
+  thumbnailLink?: string;
+  webViewLink?: string;
+  webContentLink?: string;
+  iconLink?: string;
 }
 
 const FileExplorer: React.FC = () => {
@@ -42,12 +54,20 @@ const FileExplorer: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [renamingFileId, setRenamingFileId] = useState<string | null>(null);
+  const [newFileName, setNewFileName] = useState('');
+  const [currentFilter, setCurrentFilter] = useState<{ id: string, name: string, query?: string, orderBy?: string }>({ id: 'root', name: 'Mi Unidad' });
 
-  const fetchFiles = useCallback(async (folderId: string) => {
+  // Clear selection on path/filter/search change
+  useEffect(() => setSelectedFiles(new Set()), [path, currentFilter, searchQuery]);
+
+  const fetchFiles = useCallback(async (folderId: string, customQuery?: string, orderBy?: string) => {
     setLoading(true);
     setError(null);
     try {
-      const driveFiles = await listDriveFiles(folderId);
+      const driveFiles = await listDriveFiles(folderId, customQuery, orderBy);
       setFiles(driveFiles || []);
     } catch (err: any) {
       setError(err?.result?.error?.message || 'Error al cargar archivos');
@@ -57,20 +77,25 @@ const FileExplorer: React.FC = () => {
   }, []);
 
   const handleSearch = useCallback(async (query: string) => {
-    if (!query) {
-      fetchFiles(currentFolder);
-      return;
-    }
     setLoading(true);
     try {
-      const results = await searchDriveFiles(query);
+      const results = await searchDriveFiles(query, currentFilter.id);
       setFiles(results || []);
     } catch (err) {
       setError('Error en la búsqueda');
     } finally {
       setLoading(false);
     }
-  }, [currentFolder, fetchFiles]);
+  }, [currentFilter.id]);
+
+  // Debounced Search Effect (Hot Reload)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchQuery) handleSearch(searchQuery);
+      else if (isAuthorized && searchQuery === '') fetchFiles(currentFolder, currentFilter.query, currentFilter.orderBy);
+    }, 400);
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, handleSearch, fetchFiles, currentFolder, isAuthorized, currentFilter]);
 
   useEffect(() => {
     const init = async () => {
@@ -79,8 +104,8 @@ const FileExplorer: React.FC = () => {
         await loadGisScript();
         await initializeGapiClient();
         
-        // Check if we have a token in session storage
-        const storedToken = sessionStorage.getItem('gdrive_token');
+        // Check if we have a token in local storage
+        const storedToken = localStorage.getItem('gdrive_token');
         if (storedToken) {
           window.gapi.client.setToken({ access_token: storedToken });
           setIsAuthorized(true);
@@ -100,7 +125,7 @@ const FileExplorer: React.FC = () => {
         setError('Error de autenticación');
         return;
       }
-      sessionStorage.setItem('gdrive_token', resp.access_token);
+      localStorage.setItem('gdrive_token', resp.access_token);
       setIsAuthorized(true);
       fetchFiles('root');
     });
@@ -114,14 +139,16 @@ const FileExplorer: React.FC = () => {
 
   const handleLogout = () => {
     window.gapi.client.setToken(null);
-    sessionStorage.removeItem('gdrive_token');
+    localStorage.removeItem('gdrive_token');
     setIsAuthorized(false);
     setFiles([]);
   };
 
   const navigateToFolder = (folderId: string, folderName: string) => {
     setCurrentFolder(folderId);
+    setCurrentFilter({ id: folderId, name: folderName });
     setPath([...path, { id: folderId, name: folderName }]);
+    setSearchQuery('');
     fetchFiles(folderId);
   };
 
@@ -130,7 +157,103 @@ const FileExplorer: React.FC = () => {
     setPath(newPath);
     const folderId = newPath[newPath.length - 1].id;
     setCurrentFolder(folderId);
+    setCurrentFilter({ id: folderId, name: newPath[newPath.length - 1].name });
+    setSearchQuery('');
     fetchFiles(folderId);
+  };
+
+  const openPreview = (file: FileItem) => {
+    if (file.mimeType === 'application/vnd.google-apps.folder') {
+      navigateToFolder(file.id, file.name);
+    } else if (file.webViewLink) {
+      window.open(file.webViewLink, '_blank');
+    }
+  };
+
+  const toggleSelect = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const next = new Set(selectedFiles);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedFiles(next);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedFiles.size === files.length && files.length > 0) setSelectedFiles(new Set());
+    else setSelectedFiles(new Set(files.map(f => f.id)));
+  };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.length) return;
+    const file = e.target.files[0];
+    try {
+      setUploadProgress(0);
+      await uploadFile(file, currentFilter.id === 'root' ? currentFolder : 'root', (prog) => setUploadProgress(prog));
+      fetchFiles(currentFilter.id === 'root' ? currentFolder : 'root', currentFilter.query, currentFilter.orderBy);
+    } catch (err: any) {
+      setError(err.message || 'Error al subir archivo');
+    } finally {
+      setUploadProgress(null);
+      e.target.value = '';
+    }
+  };
+
+  const handleDelete = async () => {
+    if (selectedFiles.size === 0) return;
+    if (!window.confirm(`¿Enviar ${selectedFiles.size} archivo(s) a la papelera?`)) return;
+    setLoading(true);
+    try {
+      await Promise.all(Array.from(selectedFiles).map(id => deleteFile(id)));
+      setSelectedFiles(new Set());
+      fetchFiles(currentFilter.id === 'root' ? currentFolder : 'root', currentFilter.query, currentFilter.orderBy);
+    } catch (err) {
+      setError('Error al eliminar');
+      setLoading(false);
+    }
+  };
+
+  const handleDuplicate = async () => {
+    if (selectedFiles.size === 0) return;
+    setLoading(true);
+    try {
+      await Promise.all(Array.from(selectedFiles).map(id => {
+        const file = files.find(f => f.id === id);
+        return duplicateFile(id, file?.name || 'archivo');
+      }));
+      setSelectedFiles(new Set());
+      fetchFiles(currentFilter.id === 'root' ? currentFolder : 'root', currentFilter.query, currentFilter.orderBy);
+    } catch (err) {
+      setError('Error al duplicar');
+      setLoading(false);
+    }
+  };
+
+  const handleRenameSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!renamingFileId || !newFileName.trim()) return;
+    setLoading(true);
+    try {
+      await renameFile(renamingFileId, newFileName.trim());
+      setRenamingFileId(null);
+      setNewFileName('');
+      fetchFiles(currentFilter.id === 'root' ? currentFolder : 'root', currentFilter.query, currentFilter.orderBy);
+    } catch (err) {
+      setError('Error al renombrar');
+      setLoading(false);
+    }
+  };
+
+  const startRename = (file: FileItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRenamingFileId(file.id);
+    setNewFileName(file.name);
+  };
+
+  const handleNavigationFilter = (filterId: string, filterName: string, query?: string, orderBy?: string) => {
+    setCurrentFilter({ id: filterId, name: filterName, query, orderBy });
+    setSearchQuery('');
+    setPath([{ id: filterId, name: filterName }]);
+    fetchFiles(filterId === 'root' ? currentFolder : 'root', query, orderBy);
   };
 
   const getFileIcon = (file: FileItem) => {
@@ -197,16 +320,35 @@ const FileExplorer: React.FC = () => {
           />
         </div>
         <div className="flex items-center gap-2">
+          {selectedFiles.size > 0 && (
+            <div className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-lg text-sm font-semibold mr-2 transition-all">
+              <span className="mr-2 hidden md:inline">{selectedFiles.size} seleccionados</span>
+              <button onClick={handleDuplicate} title="Duplicar" className="p-1.5 hover:bg-primary/20 rounded-md transition-colors">
+                <Copy className="w-4 h-4" />
+              </button>
+              {selectedFiles.size === 1 && (
+                <button onClick={(e) => startRename(files.find(f => f.id === Array.from(selectedFiles)[0])!, e)} title="Renombrar" className="p-1.5 hover:bg-primary/20 rounded-md transition-colors">
+                  <Edit2 className="w-4 h-4" />
+                </button>
+              )}
+              <button onClick={handleDelete} title="Eliminar" className="p-1.5 hover:bg-red-500/10 text-red-500 rounded-md transition-colors">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           <button 
-            onClick={() => fetchFiles(currentFolder)}
+            onClick={() => fetchFiles(currentFilter.id === 'root' ? currentFolder : 'root', currentFilter.query, currentFilter.orderBy)}
             className={`p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors ${loading ? 'animate-spin' : ''}`}
           >
             <RefreshCw className="w-5 h-5" />
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:shadow-lg hover:shadow-primary/30 transition-all active:scale-95">
-            <Plus className="w-4 h-4" />
-            Nuevo
-          </button>
+          
+          <label className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:shadow-lg hover:shadow-primary/30 transition-all active:scale-95 cursor-pointer">
+            <Upload className="w-4 h-4" />
+            <span className="hidden md:inline">Subir Archivo</span>
+            <input type="file" className="hidden" onChange={handleUpload} disabled={uploadProgress !== null} />
+          </label>
           <button 
             onClick={handleLogout}
             className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors"
@@ -220,23 +362,33 @@ const FileExplorer: React.FC = () => {
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar Nav */}
         <div className="w-64 border-r border-slate-100 dark:border-slate-800 p-4 space-y-1 hidden md:block">
-          <button className="w-full flex items-center gap-3 px-3 py-2 bg-primary/10 text-primary rounded-lg text-sm font-medium">
+          <button 
+            onClick={() => handleNavigationFilter('root', 'Mi Unidad')}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentFilter.id === 'root' ? 'bg-primary/10 text-primary' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
             <HardDrive className="w-4 h-4" />
             Mi Unidad
           </button>
-          <button className="w-full flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-sm font-medium transition-colors">
+          <button 
+            onClick={() => handleNavigationFilter('shared', 'Compartido', "sharedWithMe = true")}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentFilter.id === 'shared' ? 'bg-primary/10 text-primary' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
             <Share2 className="w-4 h-4" />
             Compartido
           </button>
-          <button className="w-full flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-sm font-medium transition-colors">
+          <button 
+            onClick={() => handleNavigationFilter('recent', 'Reciente', "trashed = false", "modifiedTime desc")}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentFilter.id === 'recent' ? 'bg-primary/10 text-primary' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
             <Clock className="w-4 h-4" />
             Reciente
           </button>
-          <button className="w-full flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-sm font-medium transition-colors">
+          <button 
+            onClick={() => handleNavigationFilter('starred', 'Destacados', "starred = true and trashed = false")}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentFilter.id === 'starred' ? 'bg-primary/10 text-primary' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
             <Star className="w-4 h-4" />
             Destacados
           </button>
-          <button className="w-full flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-sm font-medium transition-colors">
+          <button 
+            onClick={() => handleNavigationFilter('trash', 'Papelera', "trashed = true")}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentFilter.id === 'trash' ? 'bg-primary/10 text-primary' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
             <Trash2 className="w-4 h-4" />
             Papelera
           </button>
@@ -261,7 +413,12 @@ const FileExplorer: React.FC = () => {
 
           {/* Titles */}
           <div className="grid grid-cols-12 gap-4 px-4 py-2 mb-2 text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50 dark:border-slate-800">
-            <div className="col-span-6 md:col-span-7">Nombre</div>
+            <div className="col-span-6 md:col-span-7 flex items-center gap-3">
+              <button onClick={toggleSelectAll} className="p-0.5 text-slate-400 hover:text-primary transition-colors focus:outline-none">
+                {files.length > 0 && selectedFiles.size === files.length ? <CheckSquare className="w-4 h-4 text-primary" /> : <Square className="w-4 h-4" />}
+              </button>
+              Nombre
+            </div>
             <div className="col-span-3 md:col-span-2">Modificado</div>
             <div className="col-span-3 md:col-span-2">Tamaño</div>
             <div className="hidden md:block md:col-span-1"></div>
@@ -279,33 +436,71 @@ const FileExplorer: React.FC = () => {
                 <p>No se encontraron archivos</p>
               </div>
             ) : (
-              files.map((file) => (
-                <div 
-                  key={file.id}
-                  onDoubleClick={() => file.mimeType === 'application/vnd.google-apps.folder' && navigateToFolder(file.id, file.name)}
-                  className="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl cursor-default group items-center transition-colors border-b border-slate-50/50 dark:border-slate-800/50 last:border-0"
-                >
-                  <div className="col-span-6 md:col-span-7 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:bg-white dark:group-hover:bg-slate-700 transition-colors shadow-sm border border-transparent group-hover:border-slate-200 dark:group-hover:border-slate-600">
-                      {getFileIcon(file)}
+              <>
+                {uploadProgress !== null && (
+                  <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl items-center border-b border-slate-50/50 dark:border-slate-800/50 mb-2">
+                    <div className="col-span-12 flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center animate-pulse">
+                        <Upload className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">Subiendo archivo...</div>
+                        <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5">
+                          <div className="bg-primary h-1.5 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
+                        </div>
+                      </div>
+                      <span className="text-xs font-bold text-primary w-10 text-right">{uploadProgress}%</span>
                     </div>
-                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate pr-4">
-                      {file.name}
-                    </span>
                   </div>
-                  <div className="col-span-3 md:col-span-2 text-[11px] font-medium text-slate-500">
-                    {formatDate(file.modifiedTime)}
+                )}
+                {files.map((file) => (
+                  <div 
+                    key={file.id}
+                    onClick={() => openPreview(file)}
+                    className={`grid grid-cols-12 gap-4 px-4 py-3 rounded-xl cursor-default group items-center transition-colors border-b border-slate-50/50 dark:border-slate-800/50 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 select-none ${selectedFiles.has(file.id) ? 'bg-primary/5 dark:bg-primary/10' : ''}`}
+                  >
+                    <div className="col-span-6 md:col-span-7 flex items-center gap-3">
+                      <button onClick={(e) => toggleSelect(file.id, e)} className="p-0.5 text-slate-300 hover:text-primary transition-colors focus:outline-none">
+                        {selectedFiles.has(file.id) ? <CheckSquare className="w-4 h-4 text-primary" /> : <Square className="w-4 h-4 opacity-0 group-hover:opacity-100" />}
+                      </button>
+                      <div className="w-10 h-10 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:bg-white dark:group-hover:bg-slate-700 transition-colors shadow-sm border border-transparent group-hover:border-slate-200 dark:group-hover:border-slate-600 overflow-hidden relative">
+                        {file.thumbnailLink && !file.mimeType.includes('folder') ? (
+                          <img src={file.thumbnailLink} alt={file.name} className="w-full h-full object-cover" />
+                        ) : (
+                          getFileIcon(file)
+                        )}
+                      </div>
+                      {renamingFileId === file.id ? (
+                        <form onSubmit={handleRenameSubmit} className="flex-1 pr-4" onClick={(e) => e.stopPropagation()}>
+                          <input 
+                            autoFocus
+                            type="text" 
+                            value={newFileName} 
+                            onChange={(e) => setNewFileName(e.target.value)}
+                            className="w-full px-2 py-1 text-sm bg-white dark:bg-slate-800 border border-primary rounded focus:outline-none"
+                            onBlur={handleRenameSubmit}
+                          />
+                        </form>
+                      ) : (
+                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate pr-4">
+                          {file.name}
+                        </span>
+                      )}
+                    </div>
+                    <div className="col-span-3 md:col-span-2 text-[11px] font-medium text-slate-500">
+                      {formatDate(file.modifiedTime)}
+                    </div>
+                    <div className="col-span-3 md:col-span-2 text-[11px] font-medium text-slate-500">
+                      {formatSize(file.size)}
+                    </div>
+                    <div className="hidden md:flex md:col-span-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity gap-1">
+                      <button onClick={(e) => { e.stopPropagation(); window.open(file.webViewLink, '_blank'); }} title="Vista Previa" className="p-1 hover:text-primary hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md">
+                        <Eye className="w-4 h-4 text-slate-400 hover:text-primary" />
+                      </button>
+                    </div>
                   </div>
-                  <div className="col-span-3 md:col-span-2 text-[11px] font-medium text-slate-500">
-                    {formatSize(file.size)}
-                  </div>
-                  <div className="hidden md:flex md:col-span-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md">
-                      <MoreVertical className="w-4 h-4 text-slate-400" />
-                    </button>
-                  </div>
-                </div>
-              ))
+                ))}
+              </>
             )}
           </div>
         </div>
