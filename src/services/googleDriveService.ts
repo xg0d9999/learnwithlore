@@ -219,6 +219,16 @@ export const uploadFile = async (file: File, folderId: string = 'root', onProgre
   }
 };
 
+export const hasAccessToken = () => {
+  return !!window.gapi?.client?.getToken()?.access_token;
+};
+
+export const setAccessToken = (token: string) => {
+  if (window.gapi?.client) {
+    window.gapi.client.setToken({ access_token: token });
+  }
+};
+
 declare global {
   interface Window {
     gapi: any;

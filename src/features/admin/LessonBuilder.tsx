@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { toast } from 'sonner';
-import { listDriveFiles, initializeGapiClient, loadGapiScript } from '../../services/googleDriveService';
+import { listDriveFiles, initializeGapiClient, loadGapiScript, initializeTokenClient, setAccessToken, hasAccessToken } from '../../services/googleDriveService';
 
 const FREE_MODELS = [
     "nvidia/nemotron-3-super-120b-a12b:free"
@@ -72,6 +72,7 @@ export default function LessonBuilder() {
     const [driveFiles, setDriveFiles] = useState<any[]>([]);
     const [loadingDrive, setLoadingDrive] = useState(false);
     const [drivePath, setDrivePath] = useState<{id: string, name: string}[]>([{id: 'root', name: 'Mi Unidad'}]);
+    const [isDriveAuthorized, setIsDriveAuthorized] = useState(true);
 
     const handleDocumentUpload = async (blockId: string, file: File) => {
         if (!file) return;
@@ -170,7 +171,21 @@ export default function LessonBuilder() {
             if (!window.gapi?.client?.drive) {
                 await initializeGapiClient();
             }
+
+            // Ensure we have a token
+            if (!hasAccessToken()) {
+                const storedToken = localStorage.getItem('gdrive_token');
+                if (storedToken) {
+                    setAccessToken(storedToken);
+                } else {
+                    setIsDriveAuthorized(false);
+                    setLoadingDrive(false);
+                    return;
+                }
+            }
+
             const files = await listDriveFiles(folderId);
+            setIsDriveAuthorized(true);
             
             // Filter files if tagging metadata is present
             const filteredFiles = files.filter((file: any) => {
@@ -188,12 +203,50 @@ export default function LessonBuilder() {
             });
 
             setDriveFiles(filteredFiles);
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error loading drive files:', err);
-            toast.error('Error al conectar con Google Drive');
+            if (err.status === 401) {
+                setIsDriveAuthorized(false);
+            } else {
+                toast.error('Error al conectar con Google Drive');
+            }
         } finally {
             setLoadingDrive(false);
         }
+    };
+
+    const handleDriveAuth = async () => {
+        try {
+            await loadGisScript();
+            const tokenClient = initializeTokenClient((resp: any) => {
+                if (resp.error) {
+                    toast.error('Error de autenticación');
+                    return;
+                }
+                localStorage.setItem('gdrive_token', resp.access_token);
+                setAccessToken(resp.access_token);
+                setIsDriveAuthorized(true);
+                loadDriveFiles(drivePath[drivePath.length - 1].id);
+            });
+            tokenClient.requestAccessToken({ prompt: 'consent' });
+        } catch (err) {
+            console.error('Auth error:', err);
+            toast.error('Error al iniciar sesión en Google');
+        }
+    };
+
+    const loadGisScript = (): Promise<void> => {
+        return new Promise((resolve, reject) => {
+            if (window.google) {
+                resolve();
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = 'https://accounts.google.com/gsi/client';
+            script.onload = () => resolve();
+            script.onerror = (err) => reject(err);
+            document.body.appendChild(script);
+        });
     };
 
     const handleSelectDriveFile = (file: any) => {
@@ -1720,6 +1773,23 @@ export default function LessonBuilder() {
                                     <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-400">
                                         <div className="size-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
                                         <p className="text-sm font-bold uppercase tracking-widest">Cargando...</p>
+                                    </div>
+                                ) : !isDriveAuthorized ? (
+                                    <div className="flex flex-col items-center justify-center h-full gap-6 text-center max-w-sm mx-auto">
+                                        <div className="size-20 rounded-3xl bg-[#1FA463]/10 flex items-center justify-center text-[#1FA463]">
+                                            <span className="material-symbols-outlined text-5xl">lock</span>
+                                        </div>
+                                        <div>
+                                            <p className="text-lg font-black text-slate-900 dark:text-white">Acceso Requerido</p>
+                                            <p className="text-sm text-slate-500 mt-2">Para navegar por tus archivos de Google Drive necesitas otorgar permisos de acceso.</p>
+                                        </div>
+                                        <Button 
+                                            variant="primary" 
+                                            className="w-full h-12 rounded-2xl bg-[#1FA463] hover:bg-[#1a8e54] border-none font-black uppercase tracking-widest"
+                                            onClick={handleDriveAuth}
+                                        >
+                                            Conectar con Google Drive
+                                        </Button>
                                     </div>
                                 ) : driveFiles.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-400">
