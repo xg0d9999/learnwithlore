@@ -1029,15 +1029,26 @@ export default function LessonBuilder() {
                                                 
                                                 <div 
                                                     className="border-2 border-dashed border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center gap-3 transition-all cursor-pointer hover:border-[#1FA463] hover:bg-[#1FA463]/10"
-                                                    onClick={() => {
+                                                    onClick={async () => {
                                                         const token = window.gapi?.client?.getToken()?.access_token || localStorage.getItem('gdrive_token');
-                                                        if (token) {
+                                                        if (!token) {
+                                                            toast.error('Debes vincular tu cuenta de Google Drive en Admin > Archivos primero.');
+                                                            return;
+                                                        }
+                                                        
+                                                        toast.loading('Cargando Google Drive...', { id: 'gdrive-load' });
+                                                        try {
+                                                            if (!window.gapi?.client?.drive) {
+                                                                await initializeGapiClient();
+                                                            }
                                                             if (!window.gapi?.client?.getToken()) {
                                                                 window.gapi.client.setToken({ access_token: token });
                                                             }
                                                             setShowDriveSelector(block.id);
-                                                        } else {
-                                                            toast.error('Debes vincular tu cuenta de Google Drive en Admin > Archivos primero.');
+                                                        } catch (err) {
+                                                            toast.error('Error al iniciar Google Drive');
+                                                        } finally {
+                                                            toast.dismiss('gdrive-load');
                                                         }
                                                     }}
                                                 >
