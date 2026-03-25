@@ -46,6 +46,12 @@ export const initializeGapiClient = async (): Promise<void> => {
           apiKey: API_KEY,
           discoveryDocs: DISCOVERY_DOCS,
         });
+        
+        // Fallback explicit load just in case discoveryDocs fails silently
+        if (!window.gapi.client.drive) {
+          await new Promise((res) => window.gapi.client.load('drive', 'v3', res));
+        }
+        
         gapiInitialized = true;
         resolve();
       } catch (err) {
