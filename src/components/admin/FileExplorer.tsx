@@ -19,7 +19,9 @@ import {
   Edit2,
   Eye,
   CheckSquare,
-  Square
+  Square,
+  X,
+  ExternalLink
 } from 'lucide-react';
 import { 
   loadGapiScript, 
@@ -59,6 +61,7 @@ const FileExplorer: React.FC = () => {
   const [renamingFileId, setRenamingFileId] = useState<string | null>(null);
   const [newFileName, setNewFileName] = useState('');
   const [currentFilter, setCurrentFilter] = useState<{ id: string, name: string, query?: string, orderBy?: string }>({ id: 'root', name: 'Mi Unidad' });
+  const [previewingFile, setPreviewingFile] = useState<FileItem | null>(null);
 
   // Clear selection on path/filter/search change
   useEffect(() => setSelectedFiles(new Set()), [path, currentFilter, searchQuery]);
@@ -165,8 +168,8 @@ const FileExplorer: React.FC = () => {
   const openPreview = (file: FileItem) => {
     if (file.mimeType === 'application/vnd.google-apps.folder') {
       navigateToFolder(file.id, file.name);
-    } else if (file.webViewLink) {
-      window.open(file.webViewLink, '_blank');
+    } else {
+      setPreviewingFile(file);
     }
   };
 
@@ -510,6 +513,59 @@ const FileExplorer: React.FC = () => {
         <div className="absolute bottom-4 right-4 bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
           <AlertCircle className="w-4 h-4" />
           {error}
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {previewingFile && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 md:p-8 animate-in mt-[-1rem] -mx-4 fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-6xl h-full md:h-[90vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-sm">
+                  {getFileIcon(previewingFile)}
+                </div>
+                <span className="font-bold text-slate-700 dark:text-slate-200 truncate pr-4">
+                  {previewingFile.name}
+                </span>
+                <span className="text-xs font-semibold text-slate-400 bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded-md hidden md:inline">
+                  {formatSize(previewingFile.size)}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => window.open(previewingFile.webViewLink, '_blank')} 
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors border border-transparent"
+                  title="Abrir en pestaña nueva"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span className="hidden sm:inline">Abrir en Drive</span>
+                </button>
+                <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1"></div>
+                <button 
+                  onClick={() => setPreviewingFile(null)} 
+                  className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                  title="Cerrar vista previa"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 bg-slate-100 dark:bg-slate-950 relative">
+              {previewingFile.id ? (
+                <iframe 
+                  src={`https://drive.google.com/file/d/${previewingFile.id}/preview`} 
+                  className="w-full h-full border-0 absolute inset-0"
+                  allow="autoplay"
+                  title={`Vista Previa: ${previewingFile.name}`}
+                ></iframe>
+              ) : (
+                <div className="flex h-full items-center justify-center text-slate-500 font-medium">
+                  Este archivo no soporta previsualización incrustada.
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
