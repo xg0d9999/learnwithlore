@@ -4,6 +4,8 @@ import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { toast } from 'sonner';
+import { listDriveFiles, initializeGapiClient } from '../../services/googleDriveService';
+
 const FREE_MODELS = [
     "nvidia/nemotron-3-super-120b-a12b:free"
 ];
@@ -63,6 +65,12 @@ export default function LessonBuilder() {
     const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
     const [drafts, setDrafts] = useState<Draft[]>([]);
     const [isDraftsLoaded, setIsDraftsLoaded] = useState(false);
+
+    // Google Drive Selection State
+    const [showDriveSelector, setShowDriveSelector] = useState<string | null>(null);
+    const [driveFiles, setDriveFiles] = useState<any[]>([]);
+    const [loadingDrive, setLoadingDrive] = useState(false);
+    const [drivePath, setDrivePath] = useState<{id: string, name: string}[]>([{id: 'root', name: 'Mi Unidad'}]);
 
     const handleDocumentUpload = async (blockId: string, file: File) => {
         if (!file) return;
@@ -147,6 +155,40 @@ export default function LessonBuilder() {
             localStorage.setItem('lwl_exercise_drafts', JSON.stringify(drafts));
         }
     }, [drafts, isDraftsLoaded]);
+    useEffect(() => {
+        if (showDriveSelector) {
+            loadDriveFiles(drivePath[drivePath.length - 1].id);
+        }
+    }, [showDriveSelector, drivePath]);
+
+    const loadDriveFiles = async (folderId: string) => {
+        setLoadingDrive(true);
+        try {
+            if (!window.gapi?.client?.drive) {
+                await initializeGapiClient();
+            }
+            const files = await listDriveFiles(folderId);
+            setDriveFiles(files);
+        } catch (err) {
+            console.error('Error loading drive files:', err);
+            toast.error('Error al conectar con Google Drive');
+        } finally {
+            setLoadingDrive(false);
+        }
+    };
+
+    const handleSelectDriveFile = (file: any) => {
+        if (file.mimeType === 'application/vnd.google-apps.folder') {
+            setDrivePath([...drivePath, { id: file.id, name: file.name }]);
+        } else {
+            updateBlockContent(showDriveSelector!, {
+                url: file.webViewLink || file.webContentLink,
+                fileName: file.name,
+                fileType: file.mimeType
+            });
+            setShowDriveSelector(null);
+        }
+    };
 
     const [availableVoices, setAvailableVoices] = useState<{id: string, name: string}[]>(FALLBACK_VOICES);
 
@@ -960,29 +1002,52 @@ export default function LessonBuilder() {
                                 {block.type === 'document' && (
                                     <div className="space-y-4">
                                         {!block.content.url ? (
-                                            <div 
-                                                className={`border-2 border-dashed border-slate-200 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 transition-all cursor-pointer ${uploadingDoc === block.id ? 'opacity-50 cursor-wait' : 'hover:border-primary/50 hover:bg-primary/5'}`}
-                                                onClick={() => {
-                                                    if (uploadingDoc) return;
-                                                    const input = document.createElement('input');
-                                                    input.type = 'file';
-                                                    input.accept = 'application/pdf,image/*';
-                                                    input.onchange = (e: any) => handleDocumentUpload(block.id, e.target.files[0]);
-                                                    input.click();
-                                                }}
-                                            >
-                                                <div className="size-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-                                                    {uploadingDoc === block.id ? (
-                                                        <div className="size-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                                                    ) : (
-                                                        <span className="material-symbols-outlined text-3xl">upload_file</span>
-                                                    )}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div 
+                                                    className={`border-2 border-dashed border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center gap-3 transition-all cursor-pointer ${uploadingDoc === block.id ? 'opacity-50 cursor-wait' : 'hover:border-primary/50 hover:bg-primary/5'}`}
+                                                    onClick={() => {
+                                                        if (uploadingDoc) return;
+                                                        const input = document.createElement('input');
+                                                        input.type = 'file';
+                                                        input.accept = 'application/pdf,image/*';
+                                                        input.onchange = (e: any) => handleDocumentUpload(block.id, e.target.files[0]);
+                                                        input.click();
+                                                    }}
+                                                >
+                                                    <div className="size-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                                                        {uploadingDoc === block.id ? (
+                                                            <div className="size-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                                        ) : (
+                                                            <span className="material-symbols-outlined text-3xl">upload_file</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <p className="text-sm font-bold text-slate-900">Subir desde PC</p>
+                                                        <p className="text-xs text-slate-500 mt-1">Sube un PDF o Imagen local</p>
+                                                    </div>
                                                 </div>
-                                                <div className="text-center">
-                                                    <p className="text-sm font-bold text-slate-900">
-                                                        {uploadingDoc === block.id ? 'Subiendo archivo...' : 'Sube un PDF o Imagen de teoría'}
-                                                    </p>
-                                                    <p className="text-xs text-slate-500 mt-1">Arrastra o haz clic para seleccionar</p>
+                                                
+                                                <div 
+                                                    className="border-2 border-dashed border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center gap-3 transition-all cursor-pointer hover:border-[#1FA463] hover:bg-[#1FA463]/10"
+                                                    onClick={() => {
+                                                        const token = window.gapi?.client?.getToken()?.access_token || localStorage.getItem('gdrive_token');
+                                                        if (token) {
+                                                            if (!window.gapi?.client?.getToken()) {
+                                                                window.gapi.client.setToken({ access_token: token });
+                                                            }
+                                                            setShowDriveSelector(block.id);
+                                                        } else {
+                                                            toast.error('Debes vincular tu cuenta de Google Drive en Admin > Archivos primero.');
+                                                        }
+                                                    }}
+                                                >
+                                                    <div className="size-12 rounded-full bg-[#1FA463]/10 flex items-center justify-center text-[#1FA463]">
+                                                        <span className="material-symbols-outlined text-3xl">add_to_drive</span>
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <p className="text-sm font-bold text-slate-900">Seleccionar de Drive</p>
+                                                        <p className="text-xs text-slate-500 mt-1">Elige un archivo de tu nube</p>
+                                                    </div>
                                                 </div>
                                             </div>
                                         ) : (
@@ -1566,6 +1631,81 @@ export default function LessonBuilder() {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+                    </div>
+                )}
+                {/* Google Drive File Selector Modal */}
+                {showDriveSelector && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+                        <div className="bg-white dark:bg-slate-900 rounded-[32px] w-full max-w-3xl h-[80vh] flex flex-col shadow-2xl border border-slate-100 dark:border-slate-800 animate-in zoom-in-95 duration-300 overflow-hidden">
+                            <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-10 rounded-xl bg-[#1FA463]/10 flex items-center justify-center text-[#1FA463]">
+                                        <span className="material-symbols-outlined">add_to_drive</span>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-black uppercase tracking-tight text-slate-900 dark:text-white">Google Drive</h3>
+                                        <div className="flex items-center gap-1 text-xs font-semibold text-slate-500 mt-0.5">
+                                            {drivePath.map((p, i) => (
+                                                <span key={p.id} className="flex items-center gap-1">
+                                                    {i > 0 && <span className="material-symbols-outlined text-[14px]">chevron_right</span>}
+                                                    <button 
+                                                        className="hover:text-primary transition-colors"
+                                                        onClick={() => setDrivePath(drivePath.slice(0, i + 1))}
+                                                    >
+                                                        {p.name}
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                                <button onClick={() => setShowDriveSelector(null)} className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-200 rounded-lg transition-colors">
+                                    <span className="material-symbols-outlined">close</span>
+                                </button>
+                            </div>
+                            
+                            <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-white dark:bg-slate-900">
+                                {loadingDrive ? (
+                                    <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-400">
+                                        <div className="size-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                                        <p className="text-sm font-bold uppercase tracking-widest">Cargando...</p>
+                                    </div>
+                                ) : driveFiles.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-400">
+                                        <span className="material-symbols-outlined text-5xl opacity-50">folder_open</span>
+                                        <p className="text-sm font-bold uppercase tracking-widest">Carpeta vacía</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {driveFiles.map((file) => (
+                                            <button
+                                                key={file.id}
+                                                onClick={() => handleSelectDriveFile(file)}
+                                                className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-all text-left group"
+                                            >
+                                                <div className="size-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 overflow-hidden relative border border-slate-200/50">
+                                                    {file.thumbnailLink && !file.mimeType.includes('folder') ? (
+                                                        <img src={file.thumbnailLink} alt="" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <span className={`material-symbols-outlined text-[20px] ${file.mimeType.includes('folder') ? 'text-amber-500 fill-amber-500' : 'text-slate-400'}`}>
+                                                            {file.mimeType.includes('folder') ? 'folder' : file.mimeType.includes('pdf') ? 'picture_as_pdf' : file.mimeType.includes('video') ? 'movie' : 'description'}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate group-hover:text-primary transition-colors">
+                                                        {file.name}
+                                                    </p>
+                                                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mt-0.5">
+                                                        {new Date(file.modifiedTime).toLocaleDateString()}
+                                                    </p>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}

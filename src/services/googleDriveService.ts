@@ -156,44 +156,51 @@ export const duplicateFile = async (fileId: string, originalName: string) => {
 };
 
 export const uploadFile = async (file: File, folderId: string = 'root', onProgress?: (progress: number) => void) => {
-  return new Promise((resolve, reject) => {
+  try {
     const token = window.gapi?.client?.getToken()?.access_token;
-    if (!token) {
-      reject(new Error("No hay token de acceso"));
-      return;
-    }
+    if (!token) throw new Error("No hay token de acceso");
 
+    // Paso 1: Crear la metadata del archivo en la carpeta seleccionada
     const metadata = {
       name: file.name,
       parents: [folderId]
     };
+    
+    // Si Drive API responde 403 aquí, el entorno/scope sigue mal configurado.
+    const createRes = await window.gapi.client.drive.files.create({
+      resource: metadata,
+      fields: 'id'
+    });
+    const fileId = createRes.result.id;
 
-    const form = new FormData();
-    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-    form.append('file', file);
+    // Paso 2: Subir el contenido binario (uploadType=media) al ID creado
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PATCH', `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`);
+      xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+      xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
 
-    const xhr = new XMLHttpRequest();
-    // Use the upload API endpoint for multipart
-    xhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart');
-    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable && onProgress) {
+          onProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      };
 
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable && onProgress) {
-        onProgress(Math.round((e.loaded / e.total) * 100));
-      }
-    };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(JSON.parse(xhr.responseText));
+        } else {
+          reject(new Error(`Error al subir contenido al archivo creado: ${xhr.statusText}`));
+        }
+      };
 
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve(JSON.parse(xhr.responseText));
-      } else {
-        reject(new Error(`Error al subir archivo: ${xhr.statusText}`));
-      }
-    };
-
-    xhr.onerror = () => reject(new Error('Error de red al subir archivo'));
-    xhr.send(form);
-  });
+      xhr.onerror = () => reject(new Error('Error de red al subir archivo binario'));
+      xhr.send(file);
+    });
+  } catch (err: any) {
+    console.error('Error in uploadFile:', err);
+    throw err;
+  }
 };
 
 declare global {
