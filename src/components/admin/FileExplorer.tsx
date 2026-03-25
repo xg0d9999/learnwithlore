@@ -518,8 +518,8 @@ const FileExplorer: React.FC = () => {
 
       {/* Preview Modal */}
       {previewingFile && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 md:p-8 animate-in mt-[-1rem] -mx-4 fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-6xl h-full md:h-[90vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-[95vw] h-[95vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-sm">
@@ -544,7 +544,7 @@ const FileExplorer: React.FC = () => {
                 <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1"></div>
                 <button 
                   onClick={() => setPreviewingFile(null)} 
-                  className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                  className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700"
                   title="Cerrar vista previa"
                 >
                   <X className="w-5 h-5" />
