@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { listDriveFiles, initializeGapiClient, loadGapiScript, initializeTokenClient, setAccessToken, shareFileWithAnyone, isTokenValid, clearAccessToken } from '../../services/googleDriveService';
 
 const FREE_MODELS = [
-    "nvidia/nemotron-3-super-120b-a12b:free"
+    "google/gemma-3n-4b"
 ];
 
 const ELEVEN_LABS_API_KEY = "sk_bef262947b0b3edc39654b60f3210b229a7e19e3ac5f96b3";
@@ -392,7 +392,7 @@ export default function LessonBuilder() {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    "model": "nvidia/nemotron-3-super-120b-a12b:free",
+                    "model": "google/gemma-3n-4b",
                     "messages": [
                         { "role": "system", "content": systemPrompt },
                         { "role": "user", "content": `Generate ${isDialogue ? 'a dialogue' : 'an audio script'} for: "${prompt}"` }
@@ -764,13 +764,13 @@ export default function LessonBuilder() {
             const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                 method: 'POST',
                 headers: {
-                    'Authorization': 'Bearer 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',
-                    'HTTP-Referer': 'https://learnwithlore.com',
+                    'Authorization': `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
+                    'HTTP-Referer': window.location.origin,
                     'X-Title': 'LearnWithLore',
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: 'nvidia/nemotron-3-super-120b-a12b:free',
+                    model: 'google/gemma-3n-4b',
                     messages: [{ role: 'user', content: systemPrompt }]
                 })
             });
