@@ -265,18 +265,18 @@ export const FloatingCallManager: React.FC = () => {
                 <div className="fixed bottom-8 right-8 z-[200]">
                     <button
                         onClick={() => setIsWindowOpen(true)}
-                        className="group relative flex items-center gap-4 bg-white dark:bg-slate-900 border-2 border-primary/20 p-2 pl-6 rounded-full shadow-2xl hover:border-primary transition-all duration-300 hover:scale-105 active:scale-95"
+                        className="group relative flex items-center gap-4 bg-white dark:bg-slate-900 border-2 border-emerald-500/20 p-2 pl-6 rounded-full shadow-2xl hover:border-emerald-500 transition-all duration-300 hover:scale-105 active:scale-95"
                     >
                         <div className="flex flex-col items-start leading-none pr-4">
-                            <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">Active Call</span>
+                            <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] mb-1">Active Call</span>
                             <span className="text-sm font-black text-slate-900 dark:text-white truncate max-w-[180px]">
                                 {formatTime(activeEvent.start_time)} - {activeEvent.student_name}
                             </span>
                         </div>
-                        <div className="size-12 bg-primary text-white rounded-full flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform">
+                        <div className="size-12 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform">
                             <Phone size={20} fill="white" />
                         </div>
-                        <div className="absolute inset-0 rounded-full border-2 border-primary animate-ping opacity-20 pointer-events-none" />
+                        <div className="absolute inset-0 rounded-full border-2 border-emerald-500 animate-ping opacity-30 pointer-events-none" />
                     </button>
                 </div>
             )}
@@ -316,7 +316,6 @@ export const FloatingCallManager: React.FC = () => {
                                 src={fallbackUrl}
                                 className="absolute inset-0 w-full h-full border-none bg-black"
                                 allow="camera; microphone; fullscreen; display-capture; autoplay; clipboard-write;"
-                                sandbox="allow-forms allow-scripts allow-same-origin allow-popups"
                             />
                         )}
 
