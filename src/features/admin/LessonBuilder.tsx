@@ -793,7 +793,7 @@ export default function LessonBuilder() {
                 id: generateUUID(),
                 es: c.word_es,
                 en: c.word_en,
-                image_url: `https://source.unsplash.com/featured/?${encodeURIComponent(c.word_en)}`,
+                image_url: `https://www.learnwithlore.com/api/generate-image?prompt=${encodeURIComponent(c.word_en + ' clear background 3d')}`,
                 audio_url: ''
             }));
 

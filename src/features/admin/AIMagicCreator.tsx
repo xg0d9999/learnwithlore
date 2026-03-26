@@ -18,6 +18,7 @@ export default function AIMagicCreator() {
     const [selectedLevels, setSelectedLevels] = useState<string[]>(['A1']);
     const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['English']);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [isRefreshingImage, setIsRefreshingImage] = useState(false);
     const [status, setStatus] = useState('');
     const [isPublishing, setIsPublishing] = useState(false);
     const [generatedCards, setGeneratedCards] = useState<Flashcard[]>([]);
@@ -83,6 +84,30 @@ export default function AIMagicCreator() {
         } catch (error) {
             console.error('Freepik generation error:', error);
             return '';
+        }
+    };
+
+    const handleRefreshImage = async () => {
+        if (!generatedCards[previewIdx]) return;
+        
+        setIsRefreshingImage(true);
+        try {
+            const card = generatedCards[previewIdx];
+            const term = card.en || topic;
+            const newImageUrl = await generateFreepikImage(term);
+            
+            if (newImageUrl) {
+                const newCards = [...generatedCards];
+                newCards[previewIdx].image_url = newImageUrl;
+                setGeneratedCards(newCards);
+                toast.success('Imagen regenerada con éxito');
+            } else {
+                toast.error('No se pudo regenerar la imagen');
+            }
+        } catch (error) {
+            toast.error('Error al regenerar imagen');
+        } finally {
+            setIsRefreshingImage(false);
         }
     };
 
@@ -611,16 +636,12 @@ export default function AIMagicCreator() {
                                                         />
                                                     </label>
                                                     <button
-                                                        onClick={() => {
-                                                            const newCards = [...generatedCards];
-                                                            const term = newCards[previewIdx].en || topic;
-                                                            newCards[previewIdx].image_url = `https://source.unsplash.com/featured/?${encodeURIComponent(term + ' clear background 3d')}&sig=${Math.random()}`;
-                                                            setGeneratedCards(newCards);
-                                                        }}
-                                                        className="size-11 rounded-xl bg-white border-2 border-slate-100 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all shadow-sm"
-                                                        title="Regenerar Imagen"
+                                                        onClick={handleRefreshImage}
+                                                        className={`size-11 rounded-full bg-white border-2 border-slate-100 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition-all shadow-sm ${isRefreshingImage ? 'animate-spin cursor-not-allowed' : ''}`}
+                                                        title="Regenerar Imagen con IA"
+                                                        disabled={isRefreshingImage}
                                                     >
-                                                        <span className="material-symbols-outlined text-sm">refresh</span>
+                                                        <span className="material-symbols-outlined text-sm">{isRefreshingImage ? 'sync' : 'refresh'}</span>
                                                     </button>
                                                 </div>
                                             </div>
