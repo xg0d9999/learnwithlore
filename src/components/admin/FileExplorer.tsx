@@ -35,7 +35,8 @@ import {
   deleteFile,
   renameFile,
   duplicateFile,
-  updateFileMetadata
+  updateFileMetadata,
+  shareFileWithAnyone
 } from '../../services/googleDriveService';
 
 interface FileItem {
@@ -257,14 +258,15 @@ const FileExplorer: React.FC = () => {
     setLoading(true);
     try {
       const tagData = JSON.stringify({ levels: taggingLevels, langs: taggingLangs });
-      await Promise.all(Array.from(selectedFiles).map(id => 
-        updateFileMetadata(id, { description: tagData })
-      ));
+      await Promise.all(Array.from(selectedFiles).map(async (id) => {
+        await updateFileMetadata(id, { description: tagData });
+        await shareFileWithAnyone(id);
+      }));
       setShowTagModal(false);
       setSelectedFiles(new Set());
       fetchFiles(currentFolder, currentFilter.query, currentFilter.orderBy);
     } catch (err) {
-      setError('Error al aplicar etiquetas');
+      setError('Error al aplicar etiquetas y compartir');
     } finally {
       setLoading(false);
     }

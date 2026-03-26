@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { toast } from 'sonner';
-import { listDriveFiles, initializeGapiClient, loadGapiScript, initializeTokenClient, setAccessToken, hasAccessToken } from '../../services/googleDriveService';
+import { listDriveFiles, initializeGapiClient, loadGapiScript, initializeTokenClient, setAccessToken, hasAccessToken, shareFileWithAnyone } from '../../services/googleDriveService';
 
 const FREE_MODELS = [
     "nvidia/nemotron-3-super-120b-a12b:free"
@@ -262,6 +262,8 @@ export default function LessonBuilder() {
         let embedUrl = file.webViewLink || '';
         if (file.id) {
             embedUrl = `https://drive.google.com/file/d/${file.id}/preview`;
+            // Ensure the file is shared so students can see it
+            shareFileWithAnyone(file.id);
         }
 
         const blockData = {

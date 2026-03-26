@@ -229,6 +229,30 @@ export const setAccessToken = (token: string) => {
   }
 };
 
+export const shareFileWithAnyone = async (fileId: string) => {
+  try {
+    if (!window.gapi?.client?.drive) {
+      throw new Error('Google Drive API not loaded');
+    }
+    
+    // Create permission for "anyone" with "reader" role
+    await window.gapi.client.drive.permissions.create({
+      fileId: fileId,
+      resource: {
+        role: 'reader',
+        type: 'anyone',
+      },
+    });
+    
+    return true;
+  } catch (err: any) {
+    console.error('Error sharing file with anyone:', err);
+    // We don't throw here to avoid blocking the main flow if sharing fails
+    // (e.g. if the file is already shared or policy restricts it)
+    return false;
+  }
+};
+
 declare global {
   interface Window {
     gapi: any;
