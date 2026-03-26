@@ -56,7 +56,7 @@ export default function AIMagicCreator() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-freepik-api-key': 'FPSX49abdc761319d4111b65143ea365595d'
+                    'x-freepik-api-key': import.meta.env.VITE_FREEPIK_API_KEY
                 },
                 body: JSON.stringify({
                     styling: { style: 'cartoon' },
