@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { listDriveFiles, initializeGapiClient, loadGapiScript, initializeTokenClient, setAccessToken, shareFileWithAnyone, isTokenValid, clearAccessToken } from '../../services/googleDriveService';
 
 const FREE_MODELS = [
-    "google/gemma-3n-e4b-it:free"
+    "google/gemma-3n-e4b-it"
 ];
 
 const ELEVEN_LABS_API_KEY = "sk_bef262947b0b3edc39654b60f3210b229a7e19e3ac5f96b3";
@@ -392,7 +392,7 @@ export default function LessonBuilder() {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    "model": "google/gemma-3n-e4b-it:free",
+                    "model": "google/gemma-3n-e4b-it",
                     "messages": [
                         { "role": "system", "content": systemPrompt },
                         { "role": "user", "content": `Generate ${isDialogue ? 'a dialogue' : 'an audio script'} for: "${prompt}"` }
@@ -770,7 +770,7 @@ export default function LessonBuilder() {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: 'google/gemma-3n-e4b-it:free',
+                    model: 'google/gemma-3n-e4b-it',
                     messages: [{ role: 'user', content: systemPrompt }]
                 })
             });
