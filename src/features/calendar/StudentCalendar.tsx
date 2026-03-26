@@ -26,7 +26,7 @@ interface Assignment {
     lesson: {
         id: string;
         title: string;
-        language_level: string;
+        level: string;
         category: string;
         lesson_type: string;
     };

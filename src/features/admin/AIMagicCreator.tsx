@@ -38,7 +38,7 @@ export default function AIMagicCreator() {
         try {
             const { data, error } = await supabase
                 .from('lessons')
-                .select('id, title, language_level')
+                .select('id, title, level')
                 .eq('category', 'vocabulary')
                 .order('title');
             if (error) throw error;
@@ -168,13 +168,13 @@ export default function AIMagicCreator() {
             const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                 method: 'POST',
                 headers: {
-                    'Authorization': 'Bearer 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',
+                    'Authorization': `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
                     'HTTP-Referer': window.location.origin,
                     'X-Title': 'LearnWithLore',
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: 'openai/gpt-3.5-turbo', // Using a reliable model for JSON
+                    model: 'google/gemini-2.0-flash-lite-preview-02-05:free',
                     messages: [{ role: 'user', content: systemPrompt }]
                 })
             });
@@ -340,7 +340,7 @@ export default function AIMagicCreator() {
                                 >
                                     <option value="new">+ Crear Nueva Categoría</option>
                                     {categories.map(cat => (
-                                        <option key={cat.id} value={cat.id}>{cat.title} ({cat.language_level})</option>
+                                        <option key={cat.id} value={cat.id}>{cat.title} ({cat.level})</option>
                                     ))}
                                 </select>
                                 {isFetchingCategories && (
