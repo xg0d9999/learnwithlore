@@ -193,7 +193,7 @@ export default function AIMagicCreator() {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: 'google/gemma-3n-e4b-it',
+                    model: 'arcee-ai/trinity-mini',
                     messages: [
                         { role: 'system', content: systemPrompt },
                         { role: 'user', content: `Tema: ${topic}. Cantidad: ${count}. ${existingWordsList.length > 0 ? `Palabras a evitar: ${existingWordsList.join(', ')}` : ''}` }
