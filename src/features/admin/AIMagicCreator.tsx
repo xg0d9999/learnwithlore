@@ -52,11 +52,10 @@ export default function AIMagicCreator() {
 
     const generateFreepikImage = async (prompt: string): Promise<string> => {
         try {
-            const response = await fetch('https://api.freepik.com/v1/ai/text-to-image', {
+            const response = await fetch('/api/generate-image', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'x-freepik-api-key': import.meta.env.VITE_FREEPIK_API_KEY
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     styling: { style: 'cartoon' },
@@ -65,7 +64,10 @@ export default function AIMagicCreator() {
                 })
             });
 
-            if (!response.ok) throw new Error(`Freepik API Error: ${response.status}`);
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`Proxy Error: ${errorData.error || response.status}`);
+            }
             
             const data = await response.json();
             // Freepik usually returns base64 or a URL. 
