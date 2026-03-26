@@ -186,8 +186,11 @@ export default function AIMagicCreator() {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: 'google/gemini-2.0-flash-lite-preview-02-05:free',
-                    messages: [{ role: 'user', content: systemPrompt }]
+                    model: 'nvidia/nemotron-3-super-120b-a12b:free',
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: `Tema: ${topic}. ${existingWordsList.length > 0 ? `Palabras a evitar: ${existingWordsList.join(', ')}` : ''}` }
+                    ]
                 })
             });
 

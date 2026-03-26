@@ -386,7 +386,7 @@ export default function LessonBuilder() {
             const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                 method: "POST",
                 headers: {
-                    "Authorization": `Bearer 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`,
+                    "Authorization": `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
                     "HTTP-Referer": window.location.origin,
                     "X-Title": "LearnWithLore",
                     "Content-Type": "application/json"
