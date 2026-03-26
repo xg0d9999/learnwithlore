@@ -203,7 +203,11 @@ export const FloatingCallManager: React.FC = () => {
 
             setIsJoined(true);
         } catch (e: any) {
-            console.error('Zoom Join Error, switching to fallback:', e);
+            console.error('--- Zoom SDK Join Error Details ---');
+            console.error('Error Code/Message:', e.message || e);
+            console.error('Error Object:', e);
+            console.error('Switching to iframe fallback...');
+            
             const zoomViewUrl = `https://zoom.us/wc/join/${meetingNumber}?prefer=1&un=${encodeURIComponent(userName)}`;
             setFallbackUrl(zoomViewUrl);
             setUseFallback(true);
@@ -315,7 +319,7 @@ export const FloatingCallManager: React.FC = () => {
                             <iframe
                                 src={fallbackUrl}
                                 className="absolute inset-0 w-full h-full border-none bg-black"
-                                allow="camera; microphone; fullscreen; display-capture; autoplay; clipboard-write;"
+                                allow="camera *; microphone *; fullscreen; display-capture; autoplay; clipboard-write; speaker-selection *; self https://zoom.us"
                             />
                         )}
 
