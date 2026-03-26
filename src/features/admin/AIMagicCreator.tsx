@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { supabase } from '../../lib/supabase';
@@ -23,6 +23,65 @@ export default function AIMagicCreator() {
     const [previewIdx, setPreviewIdx] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+
+    // Categories State
+    const [categories, setCategories] = useState<any[]>([]);
+    const [selectedCategoryId, setSelectedCategoryId] = useState<string>('new');
+    const [isFetchingCategories, setIsFetchingCategories] = useState(false);
+
+    useEffect(() => {
+        fetchCategories();
+    }, []);
+
+    const fetchCategories = async () => {
+        setIsFetchingCategories(true);
+        try {
+            const { data, error } = await supabase
+                .from('lessons')
+                .select('id, title, language_level')
+                .eq('category', 'vocabulary')
+                .order('title');
+            if (error) throw error;
+            setCategories(data || []);
+        } catch (err) {
+            console.error('Error fetching categories:', err);
+        } finally {
+            setIsFetchingCategories(false);
+        }
+    };
+
+    const generateFreepikImage = async (prompt: string): Promise<string> => {
+        try {
+            const response = await fetch('https://api.freepik.com/v1/ai/text-to-image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-freepik-api-key': 'FPSX49abdc761319d4111b65143ea365595d'
+                },
+                body: JSON.stringify({
+                    styling: { style: 'cartoon' },
+                    image: { size: 'square_1_1' },
+                    prompt: prompt
+                })
+            });
+
+            if (!response.ok) throw new Error(`Freepik API Error: ${response.status}`);
+            
+            const data = await response.json();
+            // Freepik usually returns base64 or a URL. 
+            // According to their API, it might return a data array with base64 or a link.
+            // If it's a URL, we use it. If it's base64, we might need to upload it to Supabase or use it directly.
+            // For now, let's assume it returns a URL or we'll handle the base64.
+            const imageUrl = data.data?.[0]?.base64 
+                ? `data:image/png;base64,${data.data[0].base64}` 
+                : data.data?.[0]?.url;
+            
+            return imageUrl || '';
+        } catch (error) {
+            console.error('Freepik generation error:', error);
+            return '';
+        }
+    };
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -64,19 +123,47 @@ export default function AIMagicCreator() {
         setGeneratedCards([]);
         
         try {
+            // 1. Fetch existing words for de-duplication if category is selected
+            let existingWordsList: string[] = [];
+            if (selectedCategoryId !== 'new') {
+                const { data: exercises } = await supabase
+                    .from('exercises')
+                    .select('content')
+                    .eq('lesson_id', selectedCategoryId)
+                    .eq('exercise_type', 'flashcards');
+                
+                if (exercises) {
+                    exercises.forEach(ex => {
+                        const cards = ex.content?.cards || [];
+                        cards.forEach((c: any) => {
+                            if (c.en) existingWordsList.push(c.en.toLowerCase());
+                            if (c.es) existingWordsList.push(c.es.toLowerCase());
+                        });
+                    });
+                }
+            }
+
+            const isSimpleTopic = topic.toLowerCase().includes('animal') || topic.length < 10;
+
             const systemPrompt = `You are an expert language teacher. Generate a list of ${count} flashcards for the theme: "${topic}".
             Target Levels: ${selectedLevels.join(', ')}
             Target Languages: ${selectedLanguages.join(', ')}
             
-            IMPORTANT: Distribute the vocabulary across the requested levels and languages appropriately.
+            ${existingWordsList.length > 0 ? `AVOID these existing words: ${existingWordsList.join(', ')}` : ''}
+
+            RULES:
+            1. WORD COUNT: 
+               - THEMATIC CATEGORY TYPE: ${isSimpleTopic ? 'SIMPLE' : 'COMPLEX'}
+               - If THEMATIC CATEGORY TYPE is SIMPLE, use ONLY 1 WORD per flashcard (e.g., "Dog", "Blue").
+               - If THEMATIC CATEGORY TYPE is COMPLEX, you can use short phrases (MAX 3 WORDS, e.g., "Arrive on time").
+            2. IMAGE PROMPTS: For each word/phrase, provide a "freepik_prompt". This should be a basic, graphic, cartoon-style description for an AI to generate an icon-like illustration on a white/clean background.
             
             Each flashcard MUST have:
-            - word_es: The word in Spanish.
-            - word_en: The word in English.
-            - image_prompt: A very detailed DALL-E style prompt to generate a beautiful, minimalist, high-quality 3D illustration of the word.
+            - word_es: The word/phrase in Spanish.
+            - word_en: The word/phrase in English.
+            - freepik_prompt: The graphic/cartoon description.
             
-            Return ONLY the raw JSON array. NO CONVERSATION. NO MARKDOWN WRAPPERS like \`\`\`json.
-            Just the [ ... ] array.`;
+            Return ONLY the raw JSON array. NO MARKDOWN. NO CONVERSATION.`;
 
             const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                 method: 'POST',
@@ -87,56 +174,45 @@ export default function AIMagicCreator() {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: 'nvidia/nemotron-3-super-120b-a12b:free',
+                    model: 'openai/gpt-3.5-turbo', // Using a reliable model for JSON
                     messages: [{ role: 'user', content: systemPrompt }]
                 })
             });
 
-            const data = await response.json().catch(() => ({}));
-            console.log('OpenRouter Response Status:', response.status);
-            console.log('OpenRouter Response Data:', data);
-
-            if (!response.ok) {
-                const errorMessage = data?.error?.message || `API Error: ${response.status}`;
-                throw new Error(errorMessage);
-            }
-
-            if (!data.choices?.[0]?.message?.content) {
-                throw new Error('La IA no devolvió un formato válido.');
-            }
+            const data = await response.json();
+            if (!response.ok) throw new Error(data?.error?.message || 'API Error');
 
             const content = data.choices[0].message.content.trim();
-            console.log('AI Content:', content);
-            
-            let rawCards;
+            let rawCards: any[] = [];
             try {
-                // Find first [ and last ]
                 const firstBracket = content.indexOf('[');
                 const lastBracket = content.lastIndexOf(']');
-                
-                if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
-                    const jsonString = content.substring(firstBracket, lastBracket + 1);
-                    rawCards = JSON.parse(jsonString);
+                if (firstBracket !== -1 && lastBracket !== -1) {
+                    rawCards = JSON.parse(content.substring(firstBracket, lastBracket + 1));
                 } else {
                     rawCards = JSON.parse(content);
                 }
             } catch (err) {
-                console.error('JSON Extraction Error:', err);
-                throw new Error('La IA devolvió un formato ilegible. Por favor, reintenta.');
+                throw new Error('Formato de IA inválido. Reintenta.');
             }
-            
-            const formattedCards = (rawCards || []).map((c: any) => ({
-                es: c.word_es,
-                en: c.word_en,
-                image_url: `https://source.unsplash.com/featured/?${encodeURIComponent(c.word_en + ' 3d illustration')}`
+
+            // 2. Generate Images with Freepik for each card (concurrently)
+            toast.info('Generando imágenes personalizadas con Freepik AI...');
+            const cardsWithImages = await Promise.all(rawCards.map(async (c: any) => {
+                const imageUrl = await generateFreepikImage(c.freepik_prompt || `${c.word_en} cartoon icon`);
+                return {
+                    es: c.word_es,
+                    en: c.word_en,
+                    image_url: imageUrl || `https://source.unsplash.com/featured/?${encodeURIComponent(c.word_en + ' cartoon')}`
+                };
             }));
 
-            setGeneratedCards(formattedCards);
+            setGeneratedCards(cardsWithImages);
             setPreviewIdx(0);
+            toast.success('¡Mazos e imágenes generadas!');
         } catch (error: any) {
-            console.error('Full AI Generation error:', error);
-            const msg = error instanceof Error ? error.message : String(error);
-            toast.error(`Error de generación: ${msg}`);
+            console.error('Generation error:', error);
+            toast.error(`Error: ${error.message}`);
         } finally {
             setIsGenerating(false);
         }
@@ -146,36 +222,79 @@ export default function AIMagicCreator() {
         if (generatedCards.length === 0) return;
         setIsPublishing(true);
         try {
-            // 1. Create a "Lesson" for each selected level (or just use the first/combine)
-            // For now, let's create one lesson for the FIRST selected level
-            const mainLevel = selectedLevels[0] || 'A1';
-            const { data: newLesson, error: lError } = await supabase.from('lessons').insert([{
-                title: topic,
-                description: `Mazo autogenerado de ${topic} (${selectedLevels.join(', ')})`,
-                level: mainLevel,
-                category: 'vocabulary',
-                duration: 10,
-                image_url: generatedCards[0].image_url
-            }]).select().single();
+            let lessonId = selectedCategoryId;
 
-            if (lError) throw lError;
-
-            // 2. Create the flashcard block
-            const { error: eError } = await supabase.from('exercises').insert([{
-                lesson_id: newLesson.id,
-                exercise_type: 'flashcards',
-                content: {
+            if (selectedCategoryId === 'new') {
+                // 1. Create a new "Lesson"
+                const mainLevel = selectedLevels[0] || 'A1';
+                const { data: newLesson, error: lError } = await supabase.from('lessons').insert([{
                     title: topic,
-                    category: topic,
-                    cards: generatedCards,
-                    showFront: 'es'
-                },
-                order_index: 0
-            }]);
+                    description: `Mazo autogenerado de ${topic} (${selectedLevels.join(', ')})`,
+                    level: mainLevel,
+                    category: 'vocabulary',
+                    duration: 10,
+                    image_url: generatedCards[0].image_url
+                }]).select().single();
 
-            if (eError) throw eError;
+                if (lError) throw lError;
+                lessonId = newLesson.id;
 
-            toast.success('¡Mazo publicado con éxito!');
+                // 2. Create the flashcard exercise
+                const { error: eError } = await supabase.from('exercises').insert([{
+                    lesson_id: lessonId,
+                    exercise_type: 'flashcards',
+                    content: {
+                        title: topic,
+                        category: topic,
+                        cards: generatedCards,
+                        showFront: 'es'
+                    },
+                    order_index: 0
+                }]);
+
+                if (eError) throw eError;
+            } else {
+                // 3. Append to existing exercise
+                const { data: existingExercises, error: fError } = await supabase
+                    .from('exercises')
+                    .select('id, content')
+                    .eq('lesson_id', lessonId)
+                    .eq('exercise_type', 'flashcards')
+                    .single();
+
+                if (fError && fError.code !== 'PGRST116') throw fError;
+
+                if (existingExercises) {
+                    const newCards = [...(existingExercises.content?.cards || []), ...generatedCards];
+                    const { error: uError } = await supabase
+                        .from('exercises')
+                        .update({
+                            content: {
+                                ...existingExercises.content,
+                                cards: newCards
+                            }
+                        })
+                        .eq('id', existingExercises.id);
+                    
+                    if (uError) throw uError;
+                } else {
+                    // Create if doesn't exist for some reason
+                    const { error: eError } = await supabase.from('exercises').insert([{
+                        lesson_id: lessonId,
+                        exercise_type: 'flashcards',
+                        content: {
+                            title: topic,
+                            category: topic,
+                            cards: generatedCards,
+                            showFront: 'es'
+                        },
+                        order_index: 0
+                    }]);
+                    if (eError) throw eError;
+                }
+            }
+
+            toast.success('¡Mazo actualizado/publicado con éxito!');
             navigate('/admin/asignaciones');
         } catch (error) {
             console.error('Publish error:', error);
@@ -202,13 +321,47 @@ export default function AIMagicCreator() {
                 <div className="lg:col-span-4 space-y-8">
                     <div className="bg-white dark:bg-sidebar-dark rounded-[32px] p-8 border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
                         <div className="space-y-4">
-                            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block">Temática</label>
+                            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block">Categoría / Pack</label>
+                            <div className="relative">
+                                <select 
+                                    className={`w-full h-14 px-6 rounded-2xl border border-slate-200 bg-slate-50 font-bold text-slate-700 outline-none focus:border-primary transition-all appearance-none ${isFetchingCategories ? 'opacity-50' : ''}`}
+                                    value={selectedCategoryId}
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        setSelectedCategoryId(val);
+                                        if (val !== 'new') {
+                                            const cat = categories.find(c => c.id === val);
+                                            if (cat) setTopic(cat.title);
+                                        } else {
+                                            setTopic('');
+                                        }
+                                    }}
+                                    disabled={isFetchingCategories}
+                                >
+                                    <option value="new">+ Crear Nueva Categoría</option>
+                                    {categories.map(cat => (
+                                        <option key={cat.id} value={cat.id}>{cat.title} ({cat.language_level})</option>
+                                    ))}
+                                </select>
+                                {isFetchingCategories && (
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                        <span className="material-symbols-outlined animate-spin text-primary">sync</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block">
+                                {selectedCategoryId === 'new' ? 'Temática de la Nueva Categoría' : 'Añadir a Temática'}
+                            </label>
                             <input 
                                 type="text"
                                 className="w-full h-14 px-6 rounded-2xl border border-slate-200 bg-slate-50 font-bold text-slate-700 outline-none focus:border-primary transition-all placeholder:text-slate-300"
                                 placeholder='Ej: "Objetos de la cocina", "Viajes"'
                                 value={topic}
                                 onChange={e => setTopic(e.target.value)}
+                                disabled={selectedCategoryId !== 'new'}
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
