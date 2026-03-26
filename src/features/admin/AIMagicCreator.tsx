@@ -123,6 +123,18 @@ export default function AIMagicCreator() {
         setGeneratedCards([]);
         
         try {
+            // Diagnostic: Check if API key exists
+            const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+            console.log('--- AI Diagnostic ---');
+            console.log('Key detected:', !!apiKey);
+            if (apiKey) console.log('Key prefix:', apiKey.substring(0, 10) + '...');
+            
+            if (!apiKey) {
+                toast.error('Error: VITE_OPENROUTER_API_KEY no configurada en Vercel.');
+                setIsGenerating(false);
+                return;
+            }
+
             // 1. Fetch existing words for de-duplication if category is selected
             let existingWordsList: string[] = [];
             if (selectedCategoryId !== 'new') {
