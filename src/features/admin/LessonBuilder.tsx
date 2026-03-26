@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { listDriveFiles, initializeGapiClient, loadGapiScript, initializeTokenClient, setAccessToken, shareFileWithAnyone, isTokenValid, clearAccessToken } from '../../services/googleDriveService';
 
 const FREE_MODELS = [
-    "google/gemma-3n-4b"
+    "google/gemma-3n-e4b-it:free"
 ];
 
 const ELEVEN_LABS_API_KEY = "sk_bef262947b0b3edc39654b60f3210b229a7e19e3ac5f96b3";
@@ -17,7 +17,7 @@ const FALLBACK_VOICES = [
 ];
 
 function generateUUID() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         const r = Math.random() * 16 | 0;
         const v = c === 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
@@ -71,13 +71,13 @@ export default function LessonBuilder() {
     const [showDriveSelector, setShowDriveSelector] = useState<string | null>(null);
     const [driveFiles, setDriveFiles] = useState<any[]>([]);
     const [loadingDrive, setLoadingDrive] = useState(false);
-    const [drivePath, setDrivePath] = useState<{id: string, name: string}[]>([{id: 'root', name: 'Mi Unidad'}]);
+    const [drivePath, setDrivePath] = useState<{ id: string, name: string }[]>([{ id: 'root', name: 'Mi Unidad' }]);
     const [isDriveAuthorized, setIsDriveAuthorized] = useState(true);
 
     const handleDocumentUpload = async (blockId: string, file: File) => {
         if (!file) return;
         setUploadingDoc(blockId);
-        
+
         try {
             const fileExt = file.name.split('.').pop();
             const fileName = `${generateUUID()}.${fileExt}`;
@@ -195,13 +195,13 @@ export default function LessonBuilder() {
 
             const files = await listDriveFiles(folderId);
             setIsDriveAuthorized(true);
-            
+
             // Filter files and folders if tagging metadata is present
             const filteredFiles = files.filter((file: any) => {
                 // If the file/folder doesn't have a description, we don't show it 
                 // per user request: "Si la carpeta no tiene la etiqueta, no se verá"
-                if (!file.description) return false; 
-                
+                if (!file.description) return false;
+
                 try {
                     const tags = JSON.parse(file.description);
                     const levelMatch = !lesson?.level || tags.levels?.includes(lesson.level);
@@ -283,14 +283,14 @@ export default function LessonBuilder() {
             size: parseInt(file.size || '0'),
             driveId: file.id
         };
-        
+
         if (showDriveSelector) {
             updateBlockContent(showDriveSelector, blockData);
             setShowDriveSelector(null);
         }
     };
 
-    const [availableVoices, setAvailableVoices] = useState<{id: string, name: string}[]>(FALLBACK_VOICES);
+    const [availableVoices, setAvailableVoices] = useState<{ id: string, name: string }[]>(FALLBACK_VOICES);
 
     useEffect(() => {
         const fetchVoices = async () => {
@@ -379,7 +379,7 @@ export default function LessonBuilder() {
         if (!prompt) return;
         setGeneratingAI(true);
         try {
-            const systemPrompt = isDialogue 
+            const systemPrompt = isDialogue
                 ? "You are a professional script writer for English learning audio. Generate a dialogue between TWO people. Use the format 'Speaker A: ...' and 'Speaker B: ...' clearly. Keep it natural. Respond ONLY with the script text."
                 : "You are a professional script writer for English learning audio. Generate a short, natural-sounding audio script based on the theme provided. Respond ONLY with the script text.";
 
@@ -392,7 +392,7 @@ export default function LessonBuilder() {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    "model": "google/gemma-3n-4b",
+                    "model": "google/gemma-3n-e4b-it:free",
                     "messages": [
                         { "role": "system", "content": systemPrompt },
                         { "role": "user", "content": `Generate ${isDialogue ? 'a dialogue' : 'an audio script'} for: "${prompt}"` }
@@ -424,27 +424,27 @@ export default function LessonBuilder() {
                     const [speakerName, content] = line.split(':').map(s => s.trim());
                     // Find actual voiceId for this speaker label (e.g. "Speaker A" -> its selected voiceId)
                     const actualVoiceId = speakerVoices[speakerName] || voiceId;
-                    
+
                     if (!content) continue;
 
                     const ttsUrl = `https://api.elevenlabs.io/v1/text-to-speech/${actualVoiceId}/stream`;
                     console.log(`ElevenLabs Call (Stream): ${ttsUrl} for speaker ${speakerName}`);
-                    
+
                     const response = await fetch(ttsUrl, {
                         method: "POST",
                         headers: { "xi-api-key": ELEVEN_LABS_API_KEY, "Content-Type": "application/json" },
                         body: JSON.stringify({
                             text: content,
                             model_id: "eleven_multilingual_v2",
-                            voice_settings: { 
-                                stability: 0.25, 
-                                similarity_boost: 0.75, 
-                                style: 0.85, 
-                                use_speaker_boost: true 
+                            voice_settings: {
+                                stability: 0.25,
+                                similarity_boost: 0.75,
+                                style: 0.85,
+                                use_speaker_boost: true
                             }
                         })
                     });
-                    
+
                     if (!response.ok) {
                         const errData = await response.json().catch(() => ({}));
                         throw new Error(`ElevenLabs error [${response.status}] for ${speakerName}: ${JSON.stringify(errData)}`);
@@ -462,11 +462,11 @@ export default function LessonBuilder() {
                     body: JSON.stringify({
                         text,
                         model_id: "eleven_multilingual_v2",
-                        voice_settings: { 
-                            stability: 0.25, 
-                            similarity_boost: 0.75, 
-                            style: 0.85, 
-                            use_speaker_boost: true 
+                        voice_settings: {
+                            stability: 0.25,
+                            similarity_boost: 0.75,
+                            style: 0.85,
+                            use_speaker_boost: true
                         }
                     })
                 });
@@ -481,7 +481,7 @@ export default function LessonBuilder() {
             const fileName = `audio_${generateUUID()}.mp3`;
             const filePath = `asignaciones/${fileName}`;
             const fileToUpload = new File([finalBlob], fileName, { type: 'audio/mpeg' });
-            
+
             // Upload to Supabase Storage matching handleDocumentUpload exactly
             const { error: uploadError } = await supabase.storage
                 .from('public')
@@ -493,8 +493,8 @@ export default function LessonBuilder() {
                 .from('public')
                 .getPublicUrl(filePath);
 
-            updateBlockContent(blockId, { 
-                url: publicUrl, 
+            updateBlockContent(blockId, {
+                url: publicUrl,
                 ai_script: text
             });
         } catch (err) {
@@ -513,7 +513,7 @@ export default function LessonBuilder() {
 
         setGeneratingAI(true);
         setShowAIModal(false);
-        
+
         if (aiConfig.type === 'flashcards') {
             // Flashcards have a special structure and separate prompt logic
             // We use the existing theme and the newly added level/language
@@ -596,16 +596,16 @@ export default function LessonBuilder() {
             if (!content) {
                 console.warn("Todos los modelos fallaron por límites de la API. Usando mock data de prueba.");
                 const mockData = Array.from({ length: aiConfig.count }).map((_, i) => {
-                    if (aiConfig.type === 'question_mc') return { question: `Sample MC Question ${i+1}?`, options: ["Option A", "Option B", "Option C", "Option D"], correctIdx: 0, title: `Mock MC ${i+1}` };
-                    if (aiConfig.type === 'question_fill_drag') return { text: `The [cat] is [on] the table.`, title: `Mock Fill Drag ${i+1}` };
-                    if (aiConfig.type === 'question_fill_typed') return { text: `I [like] to [read] books.`, title: `Mock Fill Typed ${i+1}` };
-                    if (aiConfig.type === 'audio_vocab') return { question: `Sample Vocab word ${i+1}`, audio_url: "", title: `Mock Vocab ${i+1}` };
-                    if (aiConfig.type === 'document') return { title: `Sample Document ${i+1}`, content: `This is the content for sample document ${i+1}.` };
-                    return { text: `Sample lesson explanation text ${i+1}.`, title: `Mock Text ${i+1}` };
+                    if (aiConfig.type === 'question_mc') return { question: `Sample MC Question ${i + 1}?`, options: ["Option A", "Option B", "Option C", "Option D"], correctIdx: 0, title: `Mock MC ${i + 1}` };
+                    if (aiConfig.type === 'question_fill_drag') return { text: `The [cat] is [on] the table.`, title: `Mock Fill Drag ${i + 1}` };
+                    if (aiConfig.type === 'question_fill_typed') return { text: `I [like] to [read] books.`, title: `Mock Fill Typed ${i + 1}` };
+                    if (aiConfig.type === 'audio_vocab') return { question: `Sample Vocab word ${i + 1}`, audio_url: "", title: `Mock Vocab ${i + 1}` };
+                    if (aiConfig.type === 'document') return { title: `Sample Document ${i + 1}`, content: `This is the content for sample document ${i + 1}.` };
+                    return { text: `Sample lesson explanation text ${i + 1}.`, title: `Mock Text ${i + 1}` };
                 });
                 content = JSON.stringify(mockData);
             }
-            
+
             if (!content) throw new Error("No content received");
 
             let exercises;
@@ -616,7 +616,7 @@ export default function LessonBuilder() {
                 console.error("Failed to parse JSON:", content);
                 throw new Error("AI returned invalid JSON format.");
             }
-            
+
             if (Array.isArray(exercises)) {
                 const newBlocks = exercises.map((ex, i) => ({
                     id: generateUUID(),
@@ -725,7 +725,7 @@ export default function LessonBuilder() {
                     console.warn(`❌ Modelo ${model} falló. Probando el siguiente...`);
                 }
             }
-            
+
             if (!content) throw new Error("Todos los modelos de la API de IA fallaron debido al límite de peticiones gratuitas. Por favor, inténtalo más tarde o añade saldo a tu cuenta de OpenRouter.");
 
             // Extract JSON if model wraps it in markdown
@@ -746,7 +746,7 @@ export default function LessonBuilder() {
             setGeneratingAI(false);
         }
     };
-    
+
     const handleAIGenerateFlashcards = async (blockId: string, theme: string) => {
         setGeneratingAI(true);
         try {
@@ -770,7 +770,7 @@ export default function LessonBuilder() {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: 'google/gemma-3n-4b',
+                    model: 'google/gemma-3n-e4b-it:free',
                     messages: [{ role: 'user', content: systemPrompt }]
                 })
             });
@@ -793,7 +793,7 @@ export default function LessonBuilder() {
                 id: generateUUID(),
                 es: c.word_es,
                 en: c.word_en,
-                image_url: `https://source.unsplash.com/featured/?${encodeURIComponent(c.word_en)}`, 
+                image_url: `https://source.unsplash.com/featured/?${encodeURIComponent(c.word_en)}`,
                 audio_url: ''
             }));
 
@@ -918,8 +918,8 @@ export default function LessonBuilder() {
                         <span className="text-slate-900 font-medium">{lessonId === 'new' ? 'Nueva Asignación' : 'Editar Asignación'}</span>
                     </div>
                     <div className="flex gap-3">
-                        <Button 
-                            variant="secondary" 
+                        <Button
+                            variant="secondary"
                             className="bg-white border-slate-200 shadow-sm px-6"
                             onClick={handleSaveDraft}
                         >
@@ -1027,8 +1027,8 @@ export default function LessonBuilder() {
                                     </div>
                                     <h3 className="text-sm font-black uppercase text-slate-900 tracking-widest">Writing Workshop Settings</h3>
                                 </div>
-                                
-                                <button 
+
+                                <button
                                     onClick={handleAIGenerateWorkshop}
                                     disabled={generatingAI}
                                     className="flex items-center gap-2 w-fit px-4 py-2 rounded-xl bg-slate-900 text-white hover:bg-black transition-all shadow-lg shadow-slate-200 group disabled:opacity-50"
@@ -1040,7 +1040,7 @@ export default function LessonBuilder() {
                                         {generatingAI ? 'Generating...' : 'Fill with AI'}
                                     </span>
                                 </button>
-                                
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <label className="flex flex-col gap-2">
                                         <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-1">
@@ -1094,10 +1094,10 @@ export default function LessonBuilder() {
                                     <span className="material-symbols-outlined text-slate-300 cursor-grab active:cursor-grabbing">drag_indicator</span>
                                     <span className="inline-flex items-center gap-2 text-xs font-black uppercase text-slate-500 tracking-wider">
                                         <span className="material-symbols-outlined text-[18px] text-primary">
-                                            {block.type === 'text' ? 'article' : 
-                                             block.type === 'audio' ? 'volume_up' : 
-                                             block.type === 'document' ? 'description' : 
-                                             block.type === 'flashcards' ? 'style' : 'quiz'}
+                                            {block.type === 'text' ? 'article' :
+                                                block.type === 'audio' ? 'volume_up' :
+                                                    block.type === 'document' ? 'description' :
+                                                        block.type === 'flashcards' ? 'style' : 'quiz'}
                                         </span>
                                         {block.type === 'document' ? 'Documento / PDF' : block.type.replace('_', ' ')}
                                     </span>
@@ -1122,7 +1122,7 @@ export default function LessonBuilder() {
                                     <div className="space-y-4">
                                         {!block.content.url ? (
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div 
+                                                <div
                                                     className={`border-2 border-dashed border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center gap-3 transition-all cursor-pointer ${uploadingDoc === block.id ? 'opacity-50 cursor-wait' : 'hover:border-primary/50 hover:bg-primary/5'}`}
                                                     onClick={() => {
                                                         if (uploadingDoc) return;
@@ -1145,8 +1145,8 @@ export default function LessonBuilder() {
                                                         <p className="text-xs text-slate-500 mt-1">Sube un PDF o Imagen local</p>
                                                     </div>
                                                 </div>
-                                                
-                                                <div 
+
+                                                <div
                                                     className="border-2 border-dashed border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center gap-3 transition-all cursor-pointer hover:border-[#1FA463] hover:bg-[#1FA463]/10"
                                                     onClick={async () => {
                                                         const token = window.gapi?.client?.getToken()?.access_token || localStorage.getItem('gdrive_token');
@@ -1154,7 +1154,7 @@ export default function LessonBuilder() {
                                                             toast.error('Debes vincular tu cuenta de Google Drive en Admin > Archivos primero.');
                                                             return;
                                                         }
-                                                        
+
                                                         toast.loading('Cargando Google Drive...', { id: 'gdrive-load' });
                                                         try {
                                                             await loadGapiScript();
@@ -1199,7 +1199,7 @@ export default function LessonBuilder() {
                                                             </p>
                                                         </div>
                                                     </div>
-                                                    <button 
+                                                    <button
                                                         onClick={() => updateBlockContent(block.id, { url: null, fileName: null, fileType: null })}
                                                         className="size-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all"
                                                         title="Eliminar archivo"
@@ -1207,19 +1207,19 @@ export default function LessonBuilder() {
                                                         <span className="material-symbols-outlined text-[18px]">close</span>
                                                     </button>
                                                 </div>
-                                                
+
                                                 {/* Preview */}
                                                 <div className="rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5">
                                                     {block.content.fileType?.includes('pdf') ? (
-                                                        <iframe 
-                                                            src={`${block.content.url}#toolbar=0`} 
+                                                        <iframe
+                                                            src={`${block.content.url}#toolbar=0`}
                                                             className="w-full h-[400px] border-none"
                                                             title="Preview"
                                                         />
                                                     ) : (
-                                                        <img 
-                                                            src={block.content.url} 
-                                                            alt="Preview" 
+                                                        <img
+                                                            src={block.content.url}
+                                                            alt="Preview"
                                                             className="w-full h-auto max-h-[500px] object-contain bg-slate-50"
                                                         />
                                                     )}
@@ -1256,7 +1256,7 @@ export default function LessonBuilder() {
                                                         <span className="material-symbols-outlined text-lg">auto_awesome</span>
                                                     </div>
                                                     <h4 className="text-[11px] font-black uppercase text-slate-900 tracking-widest">Generador de Audio IA (ElevenLabs)</h4>
-                                                    <button 
+                                                    <button
                                                         onClick={(e) => { e.preventDefault(); listElevenLabsVoices(); }}
                                                         className="text-[9px] font-bold text-primary hover:underline ml-2"
                                                     >
@@ -1265,7 +1265,7 @@ export default function LessonBuilder() {
                                                 </div>
                                                 <label className="flex items-center gap-2 cursor-pointer group">
                                                     <span className={`text-[10px] font-black uppercase tracking-widest ${block.content.is_dialogue ? 'text-primary' : 'text-slate-400 group-hover:text-slate-600'}`}>Modo Diálogo</span>
-                                                    <div 
+                                                    <div
                                                         onClick={() => updateBlockContent(block.id, { is_dialogue: !block.content.is_dialogue, speakers: block.content.speakers || { 'Speaker A': availableVoices[0]?.id || FALLBACK_VOICES[0].id, 'Speaker B': availableVoices[1]?.id || FALLBACK_VOICES[1].id } })}
                                                         className={`w-10 h-5 rounded-full relative transition-all ${block.content.is_dialogue ? 'bg-primary' : 'bg-slate-200'}`}
                                                     >
@@ -1280,11 +1280,11 @@ export default function LessonBuilder() {
                                                         {['Speaker A', 'Speaker B'].map(s => (
                                                             <div key={s} className="space-y-2">
                                                                 <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest px-1">{s}</label>
-                                                                <Select 
+                                                                <Select
                                                                     className="w-full !h-10 !text-[10px]"
                                                                     value={(block.content.speakers || {})[s] || availableVoices[0]?.id || FALLBACK_VOICES[0].id}
-                                                                    onChange={e => updateBlockContent(block.id, { 
-                                                                        speakers: { ...(block.content.speakers || {}), [s]: e.target.value } 
+                                                                    onChange={e => updateBlockContent(block.id, {
+                                                                        speakers: { ...(block.content.speakers || {}), [s]: e.target.value }
                                                                     })}
                                                                     options={availableVoices.map((v: any) => ({ value: v.id, label: v.name }))}
                                                                 />
@@ -1294,14 +1294,14 @@ export default function LessonBuilder() {
                                                 )}
 
                                                 <div className="flex gap-2">
-                                                    <input 
+                                                    <input
                                                         type="text"
                                                         placeholder={block.content.is_dialogue ? "Tema del diálogo (ej: 'Checking in at an airport')" : "Prompt para el guion (ej: 'Conversation about coffee')"}
                                                         className="flex-1 h-11 px-4 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:border-primary outline-none transition-all"
                                                         value={block.content.ai_prompt || ''}
                                                         onChange={e => updateBlockContent(block.id, { ai_prompt: e.target.value })}
                                                     />
-                                                    <Button 
+                                                    <Button
                                                         size="sm"
                                                         variant="primary"
                                                         className="h-11 px-4 rounded-xl"
@@ -1316,7 +1316,7 @@ export default function LessonBuilder() {
                                                     <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
                                                         <div className="space-y-2">
                                                             <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest pl-1">Guion Generado</label>
-                                                            <textarea 
+                                                            <textarea
                                                                 className="w-full p-4 rounded-2xl bg-white border border-slate-200 text-sm font-medium text-slate-700 min-h-[120px] outline-none focus:border-primary transition-all shadow-inner"
                                                                 value={block.content.ai_script}
                                                                 onChange={e => updateBlockContent(block.id, { ai_script: e.target.value })}
@@ -1328,7 +1328,7 @@ export default function LessonBuilder() {
                                                             {!block.content.is_dialogue && (
                                                                 <div className="flex-1 min-w-[150px] space-y-2">
                                                                     <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest pl-1">Voz de ElevenLabs</label>
-                                                                    <Select 
+                                                                    <Select
                                                                         className="w-full !h-11 !text-xs"
                                                                         value={block.content.voice_id || availableVoices[0]?.id || FALLBACK_VOICES[0].id}
                                                                         onChange={e => updateBlockContent(block.id, { voice_id: e.target.value })}
@@ -1336,14 +1336,14 @@ export default function LessonBuilder() {
                                                                     />
                                                                 </div>
                                                             )}
-                                                            <Button 
+                                                            <Button
                                                                 variant="primary"
                                                                 className="h-11 px-6 rounded-xl bg-slate-900 border-none hover:bg-black shadow-lg shadow-slate-200 w-full sm:w-auto"
                                                                 loading={generatingAI}
                                                                 disabled={!block.content.ai_script}
                                                                 onClick={() => handleGenerateElevenLabsAudio(
-                                                                    block.id, 
-                                                                    block.content.ai_script, 
+                                                                    block.id,
+                                                                    block.content.ai_script,
                                                                     block.content.voice_id || availableVoices[0]?.id || FALLBACK_VOICES[0].id,
                                                                     block.content.is_dialogue,
                                                                     block.content.speakers
@@ -1365,7 +1365,7 @@ export default function LessonBuilder() {
                                         <div className="flex items-center justify-between gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                                             <div className="flex-1">
                                                 <label className="text-[10px] font-black uppercase text-slate-400 mb-1 block">Categoría / Tema de IA</label>
-                                                <input 
+                                                <input
                                                     type="text"
                                                     value={block.content.category || ''}
                                                     onChange={(e) => updateBlockContent(block.id, { category: e.target.value })}
@@ -1373,7 +1373,7 @@ export default function LessonBuilder() {
                                                     className="w-full bg-white border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary/20 transition-all px-4 py-2"
                                                 />
                                             </div>
-                                            <Button 
+                                            <Button
                                                 variant="secondary"
                                                 className="bg-white border-slate-200 h-10 px-4 text-[10px] font-black uppercase tracking-widest hover:border-primary hover:text-primary transition-all"
                                                 onClick={() => handleAIGenerateFlashcards(block.id, block.content.category || 'General')}
@@ -1387,7 +1387,7 @@ export default function LessonBuilder() {
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                             {(block.content.cards || []).map((card: any, idx: number) => (
                                                 <div key={card.id} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm group hover:shadow-md transition-all relative">
-                                                    <button 
+                                                    <button
                                                         onClick={() => {
                                                             const newCards = [...block.content.cards];
                                                             newCards.splice(idx, 1);
@@ -1397,7 +1397,7 @@ export default function LessonBuilder() {
                                                     >
                                                         <span className="material-symbols-outlined text-[14px]">close</span>
                                                     </button>
-                                                    
+
                                                     <div className="space-y-3">
                                                         <div className="aspect-[4/3] rounded-xl bg-slate-50 overflow-hidden relative group/img">
                                                             {card.image_url ? (
@@ -1414,7 +1414,7 @@ export default function LessonBuilder() {
                                                             </div>
                                                         </div>
                                                         <div className="space-y-2">
-                                                            <input 
+                                                            <input
                                                                 type="text"
                                                                 value={card.es}
                                                                 onChange={(e) => {
@@ -1425,7 +1425,7 @@ export default function LessonBuilder() {
                                                                 placeholder="Español"
                                                                 className="w-full text-xs font-black text-slate-900 border-none bg-slate-50 rounded-lg p-2 focus:ring-1 focus:ring-primary/20"
                                                             />
-                                                            <input 
+                                                            <input
                                                                 type="text"
                                                                 value={card.en}
                                                                 onChange={(e) => {
@@ -1440,7 +1440,7 @@ export default function LessonBuilder() {
                                                     </div>
                                                 </div>
                                             ))}
-                                            <button 
+                                            <button
                                                 onClick={() => {
                                                     const newCards = [...(block.content.cards || []), { id: generateUUID(), es: '', en: '', image_url: '', audio_url: '' }];
                                                     updateBlockContent(block.id, { cards: newCards });
@@ -1518,7 +1518,7 @@ export default function LessonBuilder() {
                                             value={block.content.text || ''}
                                             onChange={e => updateBlockContent(block.id, { text: e.target.value })}
                                         />
-                                        
+
                                         <div className="p-4 rounded-xl bg-blue-50/50 border border-blue-100">
                                             <p className="text-[10px] font-black uppercase text-blue-400 tracking-widest mb-2">Live Preview</p>
                                             <div className="text-sm font-medium text-slate-700 leading-loose">
@@ -1548,7 +1548,7 @@ export default function LessonBuilder() {
                                 <p className="text-xs font-black uppercase text-slate-400 tracking-widest">Build your asignación</p>
                                 <span className="text-sm text-slate-500 font-medium italic">Select a block type to insert at the end</span>
                             </div>
-                            <button 
+                            <button
                                 onClick={() => setShowAIModal(true)}
                                 className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-primary to-primary-dark text-white hover:shadow-xl hover:shadow-primary/20 transition-all group"
                             >
@@ -1601,7 +1601,7 @@ export default function LessonBuilder() {
                             <div className="space-y-6">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Exercise Type</label>
-                                    <Select 
+                                    <Select
                                         className="w-full"
                                         value={aiConfig.type}
                                         onChange={v => setAIConfig({ ...aiConfig, type: v as any })}
@@ -1619,7 +1619,7 @@ export default function LessonBuilder() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Nivel</label>
-                                        <Select 
+                                        <Select
                                             className="w-full"
                                             value={aiConfig.level}
                                             onChange={e => setAIConfig({ ...aiConfig, level: e.target.value as any })}
@@ -1634,7 +1634,7 @@ export default function LessonBuilder() {
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Idioma Destino</label>
-                                        <Select 
+                                        <Select
                                             className="w-full"
                                             value={aiConfig.language}
                                             onChange={e => setAIConfig({ ...aiConfig, language: e.target.value })}
@@ -1650,7 +1650,7 @@ export default function LessonBuilder() {
 
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Temática / Contexto (Opcional)</label>
-                                    <input 
+                                    <input
                                         type="text"
                                         placeholder="Ej: Verbos irregulares, Vocabulario de aeropuerto..."
                                         className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 outline-none focus:border-primary transition-all"
@@ -1664,7 +1664,7 @@ export default function LessonBuilder() {
                                     <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Quantity of Blocks</label>
                                     <div className="flex gap-2">
                                         {[1, 2, 3, 5].map(n => (
-                                            <button 
+                                            <button
                                                 key={n}
                                                 onClick={() => setAIConfig({ ...aiConfig, count: n })}
                                                 className={`flex-1 h-10 rounded-xl border text-sm font-black transition-all ${aiConfig.count === n ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-slate-50 border-slate-100 text-slate-500 hover:border-slate-300'}`}
@@ -1672,7 +1672,7 @@ export default function LessonBuilder() {
                                                 {n}
                                             </button>
                                         ))}
-                                        <input 
+                                        <input
                                             type="number"
                                             min="1"
                                             max="50"
@@ -1688,8 +1688,8 @@ export default function LessonBuilder() {
                                     </div>
                                 </div>
 
-                                <Button 
-                                    variant="primary" 
+                                <Button
+                                    variant="primary"
                                     className="w-full h-14 rounded-2xl text-xs font-black uppercase tracking-widest mt-4"
                                     onClick={handleAIGenerateExercises}
                                     loading={generatingAI}
@@ -1718,7 +1718,7 @@ export default function LessonBuilder() {
                             {drafts.map((draft) => (
                                 <div key={draft.id} className="bg-amber-50/50 border border-amber-100 rounded-[28px] p-6 shadow-sm hover:shadow-xl hover:shadow-amber-900/5 transition-all group relative overflow-hidden">
                                     <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button 
+                                        <button
                                             onClick={() => handleDeleteDraft(draft.id)}
                                             className="size-8 rounded-xl bg-white border border-rose-100 text-rose-400 hover:text-rose-600 hover:bg-rose-50 transition-all shadow-sm"
                                         >
@@ -1738,7 +1738,7 @@ export default function LessonBuilder() {
                                                 </span>
                                             </div>
                                         </div>
-                                        
+
                                         <div className="flex flex-wrap gap-1.5 min-h-[50px] content-start">
                                             {Object.entries(
                                                 draft.blocks.reduce((acc: any, b) => {
@@ -1752,7 +1752,7 @@ export default function LessonBuilder() {
                                             ))}
                                         </div>
 
-                                        <button 
+                                        <button
                                             onClick={() => handleRestoreDraft(draft)}
                                             className="w-full h-12 rounded-2xl bg-amber-600 text-white hover:bg-amber-700 shadow-lg shadow-amber-600/20 transition-all text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 group/btn"
                                         >
@@ -1780,7 +1780,7 @@ export default function LessonBuilder() {
                                             {drivePath.map((p, i) => (
                                                 <span key={p.id} className="flex items-center gap-1">
                                                     {i > 0 && <span className="material-symbols-outlined text-[14px]">chevron_right</span>}
-                                                    <button 
+                                                    <button
                                                         className="hover:text-primary transition-colors"
                                                         onClick={() => setDrivePath(drivePath.slice(0, i + 1))}
                                                     >
@@ -1795,7 +1795,7 @@ export default function LessonBuilder() {
                                     <span className="material-symbols-outlined">close</span>
                                 </button>
                             </div>
-                            
+
                             <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-white dark:bg-slate-900">
                                 {loadingDrive ? (
                                     <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-400">
@@ -1811,8 +1811,8 @@ export default function LessonBuilder() {
                                             <p className="text-lg font-black text-slate-900 dark:text-white">Acceso Requerido</p>
                                             <p className="text-sm text-slate-500 mt-2">Para navegar por tus archivos de Google Drive necesitas otorgar permisos de acceso.</p>
                                         </div>
-                                        <Button 
-                                            variant="primary" 
+                                        <Button
+                                            variant="primary"
                                             className="w-full h-12 rounded-2xl bg-[#1FA463] hover:bg-[#1a8e54] border-none font-black uppercase tracking-widest"
                                             onClick={handleDriveAuth}
                                         >

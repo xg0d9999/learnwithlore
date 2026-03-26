@@ -69,16 +69,16 @@ export default function AIMagicCreator() {
                 const errorData = await response.json().catch(() => ({}));
                 throw new Error(`Proxy Error: ${errorData.error || response.status}`);
             }
-            
+
             const data = await response.json();
             // Freepik usually returns base64 or a URL. 
             // According to their API, it might return a data array with base64 or a link.
             // If it's a URL, we use it. If it's base64, we might need to upload it to Supabase or use it directly.
             // For now, let's assume it returns a URL or we'll handle the base64.
-            const imageUrl = data.data?.[0]?.base64 
-                ? `data:image/png;base64,${data.data[0].base64}` 
+            const imageUrl = data.data?.[0]?.base64
+                ? `data:image/png;base64,${data.data[0].base64}`
                 : data.data?.[0]?.url;
-            
+
             return imageUrl || '';
         } catch (error) {
             console.error('Freepik generation error:', error);
@@ -125,14 +125,14 @@ export default function AIMagicCreator() {
         setIsGenerating(true);
         setGeneratedCards([]);
         setStatus('Iniciando generación...');
-        
+
         try {
             // Diagnostic: Check if API key exists
             const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
             console.log('--- AI Diagnostic ---');
             console.log('Key detected:', !!apiKey);
             if (apiKey) console.log('Key prefix:', apiKey.substring(0, 10) + '...');
-            
+
             if (!apiKey) {
                 toast.error('Error: VITE_OPENROUTER_API_KEY no configurada.');
                 setIsGenerating(false);
@@ -149,7 +149,7 @@ export default function AIMagicCreator() {
                     .select('content')
                     .eq('lesson_id', selectedCategoryId)
                     .eq('exercise_type', 'flashcards');
-                
+
                 if (exercises) {
                     exercises.forEach(ex => {
                         const cards = ex.content?.cards || [];
@@ -193,7 +193,7 @@ export default function AIMagicCreator() {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: 'google/gemma-3n-4b',
+                    model: 'google/gemma-3n-e4b-it:free',
                     messages: [
                         { role: 'system', content: systemPrompt },
                         { role: 'user', content: `Tema: ${topic}. Cantidad: ${count}. ${existingWordsList.length > 0 ? `Palabras a evitar: ${existingWordsList.join(', ')}` : ''}` }
@@ -220,7 +220,7 @@ export default function AIMagicCreator() {
 
             // 2. Generate Images with Freepik for each card (concurrently)
             setStatus('¡Palabras creadas! Iniciando generación de imágenes en paralelo...');
-            
+
             let completedCount = 0;
             const cardsWithImages = await Promise.all(rawCards.map(async (c: any) => {
                 const word = c.word_es || c.word_en;
@@ -304,7 +304,7 @@ export default function AIMagicCreator() {
                             }
                         })
                         .eq('id', existingExercises.id);
-                    
+
                     if (uError) throw uError;
                 } else {
                     // Create if doesn't exist for some reason
@@ -352,7 +352,7 @@ export default function AIMagicCreator() {
                         <div className="space-y-4">
                             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block">Categoría / Pack</label>
                             <div className="relative">
-                                <select 
+                                <select
                                     className={`w-full h-14 px-6 rounded-2xl border border-slate-200 bg-slate-50 font-bold text-slate-700 outline-none focus:border-primary transition-all appearance-none ${isFetchingCategories ? 'opacity-50' : ''}`}
                                     value={selectedCategoryId}
                                     onChange={e => {
@@ -384,7 +384,7 @@ export default function AIMagicCreator() {
                             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block">
                                 {selectedCategoryId === 'new' ? 'Temática de la Nueva Categoría' : 'Añadir a Temática'}
                             </label>
-                            <input 
+                            <input
                                 type="text"
                                 className="w-full h-14 px-6 rounded-2xl border border-slate-200 bg-slate-50 font-bold text-slate-700 outline-none focus:border-primary transition-all placeholder:text-slate-300"
                                 placeholder='Ej: "Objetos de la cocina", "Viajes"'
@@ -413,9 +413,9 @@ export default function AIMagicCreator() {
                                 <div className="grid grid-cols-3 gap-2">
                                     {['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].map(l => (
                                         <label key={l} className={`flex items-center justify-center h-10 rounded-xl border-2 transition-all cursor-pointer font-bold text-xs ${selectedLevels.includes(l) ? 'border-primary bg-primary/5 text-primary' : 'border-slate-100 bg-slate-50 text-slate-400'}`}>
-                                            <input 
-                                                type="checkbox" 
-                                                className="hidden" 
+                                            <input
+                                                type="checkbox"
+                                                className="hidden"
                                                 checked={selectedLevels.includes(l)}
                                                 onChange={() => {
                                                     if (selectedLevels.includes(l)) setSelectedLevels(selectedLevels.filter(x => x !== l));
@@ -434,9 +434,9 @@ export default function AIMagicCreator() {
                             <div className="grid grid-cols-2 gap-2">
                                 {['English', 'Spanish'].map(lang => (
                                     <label key={lang} className={`flex items-center gap-2 px-4 h-10 rounded-xl border-2 transition-all cursor-pointer font-bold text-xs ${selectedLanguages.includes(lang) ? 'border-primary bg-primary/5 text-primary' : 'border-slate-100 bg-slate-50 text-slate-400'}`}>
-                                        <input 
-                                            type="checkbox" 
-                                            className="hidden" 
+                                        <input
+                                            type="checkbox"
+                                            className="hidden"
                                             checked={selectedLanguages.includes(lang)}
                                             onChange={() => {
                                                 if (selectedLanguages.includes(lang)) setSelectedLanguages(selectedLanguages.filter(x => x !== lang));
@@ -449,8 +449,8 @@ export default function AIMagicCreator() {
                             </div>
                         </div>
 
-                        <Button 
-                            variant="primary" 
+                        <Button
+                            variant="primary"
                             className="w-full h-14 rounded-2xl shadow-xl shadow-primary/20"
                             onClick={handleGenerate}
                             disabled={isGenerating}
@@ -492,10 +492,10 @@ export default function AIMagicCreator() {
                                                 <div className="p-4 flex-1">
                                                     <div className="w-full h-full rounded-2xl overflow-hidden bg-slate-50 relative group">
                                                         {generatedCards[previewIdx].image_url ? (
-                                                            <img 
-                                                                src={generatedCards[previewIdx].image_url} 
-                                                                alt="" 
-                                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                            <img
+                                                                src={generatedCards[previewIdx].image_url}
+                                                                alt=""
+                                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                                             />
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center text-slate-100">
@@ -530,14 +530,14 @@ export default function AIMagicCreator() {
 
                                     {/* Navigation */}
                                     <div className="flex items-center gap-6">
-                                        <button 
+                                        <button
                                             onClick={() => { setPreviewIdx(v => Math.max(0, v - 1)); setIsFlipped(false); }}
                                             className="size-14 rounded-2xl border-2 border-slate-200 flex items-center justify-center text-slate-400 hover:border-primary hover:text-primary transition-all bg-white shadow-sm"
                                             disabled={previewIdx === 0}
                                         >
                                             <span className="material-symbols-outlined font-black">chevron_left</span>
                                         </button>
-                                        <button 
+                                        <button
                                             onClick={() => { setPreviewIdx(v => Math.min(generatedCards.length - 1, v + 1)); setIsFlipped(false); }}
                                             className="size-14 rounded-2xl border-2 border-slate-200 flex items-center justify-center text-slate-400 hover:border-primary hover:text-primary transition-all bg-white shadow-sm"
                                             disabled={previewIdx === generatedCards.length - 1}
@@ -557,7 +557,7 @@ export default function AIMagicCreator() {
                                     <div className="space-y-4">
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Palabra (Español)</label>
-                                            <input 
+                                            <input
                                                 type="text"
                                                 className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-white font-bold text-slate-700 outline-none focus:border-primary transition-all"
                                                 value={generatedCards[previewIdx].es}
@@ -570,7 +570,7 @@ export default function AIMagicCreator() {
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Traducción (Inglés)</label>
-                                            <input 
+                                            <input
                                                 type="text"
                                                 className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-white font-bold text-slate-700 outline-none focus:border-primary transition-all"
                                                 value={generatedCards[previewIdx].en}
@@ -586,7 +586,7 @@ export default function AIMagicCreator() {
                                             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Imagen de la Carta</label>
                                             <div className="flex flex-col gap-3">
                                                 <div className="relative group">
-                                                    <input 
+                                                    <input
                                                         type="text"
                                                         className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white font-bold text-slate-700 outline-none focus:border-primary transition-all text-[10px]"
                                                         placeholder="URL de imagen externa..."
@@ -602,15 +602,15 @@ export default function AIMagicCreator() {
                                                     <label className={`flex-1 h-11 flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 hover:border-primary hover:bg-primary/5 transition-all cursor-pointer ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                                         <span className="material-symbols-outlined text-sm">{isUploading ? 'sync' : 'upload'}</span>
                                                         <span className="text-[10px] font-black uppercase tracking-widest">{isUploading ? 'Subiendo...' : 'Subir ImagenLocal'}</span>
-                                                        <input 
-                                                            type="file" 
-                                                            className="hidden" 
+                                                        <input
+                                                            type="file"
+                                                            className="hidden"
                                                             accept="image/*"
                                                             onChange={handleImageUpload}
                                                             disabled={isUploading}
                                                         />
                                                     </label>
-                                                    <button 
+                                                    <button
                                                         onClick={() => {
                                                             const newCards = [...generatedCards];
                                                             const term = newCards[previewIdx].en || topic;
@@ -641,8 +641,8 @@ export default function AIMagicCreator() {
                                 </div>
                                 <div className="flex gap-4">
                                     <Button variant="secondary" className="px-8 rounded-2xl border-2" onClick={() => setGeneratedCards([])}>Descartar</Button>
-                                    <Button 
-                                        variant="primary" 
+                                    <Button
+                                        variant="primary"
                                         className="px-10 rounded-2xl shadow-xl shadow-primary/20"
                                         loading={isPublishing}
                                         disabled={isPublishing}
