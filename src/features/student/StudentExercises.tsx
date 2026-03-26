@@ -46,6 +46,9 @@ export default function StudentExercises() {
     const isReviewMode = searchParams.get('review') === 'true';
     const [reviewScore, setReviewScore] = useState<number | null>(null);
 
+    // Fullscreen Preview State
+    const [fullscreenFileUrl, setFullscreenFileUrl] = useState<string | null>(null);
+
     useEffect(() => {
         if (lessonId) fetchLesson();
     }, [lessonId]);
@@ -361,14 +364,23 @@ export default function StudentExercises() {
                                                 </a>
                                             )}
                                         </div>
-                                        <div className="rounded-3xl overflow-hidden border border-slate-200 bg-white shadow-2xl shadow-slate-200/50">
+                                        <div className="rounded-3xl overflow-hidden border border-slate-200 bg-white shadow-2xl shadow-slate-200/50 relative group/preview">
                                             {currentBlock.content.url?.includes('drive.google.com') ? (
-                                                <iframe 
-                                                    src={currentBlock.content.url} 
-                                                    className="w-full h-[600px] border-none" 
-                                                    title="Drive Preview"
-                                                    allow="autoplay"
-                                                />
+                                                <>
+                                                    <iframe 
+                                                        src={currentBlock.content.url} 
+                                                        className="w-full h-[600px] border-none" 
+                                                        title="Drive Preview"
+                                                        allow="autoplay"
+                                                    />
+                                                    <button 
+                                                        onClick={() => setFullscreenFileUrl(currentBlock.content.url)}
+                                                        className="absolute top-4 right-4 bg-slate-900/80 hover:bg-slate-900 text-white p-3 rounded-2xl backdrop-blur-md opacity-0 group-hover/preview:opacity-100 transition-all flex items-center gap-2 shadow-2xl border border-white/10"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[20px]">fullscreen</span>
+                                                        <span className="text-xs font-black uppercase tracking-widest">Ampliar</span>
+                                                    </button>
+                                                </>
                                             ) : (
                                                 <>
                                                     {currentBlock.content.fileType?.includes('pdf') ? (
@@ -637,6 +649,40 @@ export default function StudentExercises() {
                     )}
                 </div>
             </main>
+
+            {/* Fullscreen Drive Preview Overlay */}
+            {fullscreenFileUrl && (
+                <div className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-3xl p-4 md:p-12 flex flex-col animate-in fade-in duration-500">
+                    <div className="flex justify-between items-center mb-8 px-4">
+                        <div className="flex items-center gap-4 text-white">
+                            <div className="size-12 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center">
+                                <span className="material-symbols-outlined text-2xl">fullscreen</span>
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-black">Vista Ampliada</h3>
+                                <p className="text-white/60 text-xs font-bold uppercase tracking-widest">Documento de Clase</p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={() => setFullscreenFileUrl(null)}
+                            className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl backdrop-blur-xl transition-all border border-white/20 flex items-center gap-2 group"
+                        >
+                            <span className="text-sm font-black uppercase tracking-widest hidden md:inline group-hover:pr-2 transition-all">Cerrar</span>
+                            <span className="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+                    
+                    <div className="flex-1 bg-white rounded-[40px] shadow-2xl overflow-hidden relative border-8 border-white/10 ring-1 ring-white/20">
+                        <iframe 
+                            src={fullscreenFileUrl} 
+                            className="w-full h-full border-none" 
+                            title="Fullscreen Drive Preview"
+                            allow="autoplay"
+                        />
+                    </div>
+                </div>
+            )}
+
 
             <footer className="px-6 py-6 bg-white border-t border-slate-200 relative z-30">
                 <div className="max-w-2xl mx-auto flex gap-4">

@@ -664,7 +664,7 @@ const FileExplorer: React.FC = () => {
                   {['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].map(lvl => (
                     <button 
                       key={lvl}
-                      onClick={() => taggingLevels.includes(lvl) ? setTaggingLevels(taggingLevels.filter(l => l !== lvl)) : setTaggingLevels([...taggingLevels, lvl])}
+                      onClick={() => setTaggingLevels(prev => prev.includes(lvl) ? prev.filter(l => l !== lvl) : [...prev, lvl])}
                       className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${taggingLevels.includes(lvl) ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
                     >
                       {lvl}
@@ -679,7 +679,7 @@ const FileExplorer: React.FC = () => {
                   {['English', 'Spanish'].map(lang => (
                     <button 
                       key={lang}
-                      onClick={() => taggingLangs.includes(lang) ? setTaggingLangs(taggingLangs.filter(l => l !== lang)) : setTaggingLangs([...taggingLangs, lang])}
+                      onClick={() => setTaggingLangs(prev => prev.includes(lang) ? prev.filter(l => l !== lang) : [...prev, lang])}
                       className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${taggingLangs.includes(lang) ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
                     >
                       {lang === 'English' ? '🇺🇸 English' : '🇪🇸 Español'}
