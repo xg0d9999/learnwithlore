@@ -18,6 +18,7 @@ export default function AIMagicCreator() {
     const [selectedLevels, setSelectedLevels] = useState<string[]>(['A1']);
     const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['English']);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [status, setStatus] = useState('');
     const [isPublishing, setIsPublishing] = useState(false);
     const [generatedCards, setGeneratedCards] = useState<Flashcard[]>([]);
     const [previewIdx, setPreviewIdx] = useState(0);
@@ -123,6 +124,7 @@ export default function AIMagicCreator() {
         }
         setIsGenerating(true);
         setGeneratedCards([]);
+        setStatus('Iniciando generación...');
         
         try {
             // Diagnostic: Check if API key exists
@@ -132,14 +134,16 @@ export default function AIMagicCreator() {
             if (apiKey) console.log('Key prefix:', apiKey.substring(0, 10) + '...');
             
             if (!apiKey) {
-                toast.error('Error: VITE_OPENROUTER_API_KEY no configurada en Vercel.');
+                toast.error('Error: VITE_OPENROUTER_API_KEY no configurada.');
                 setIsGenerating(false);
                 return;
             }
 
+            setStatus('Conectando con OpenRouter...');
             // 1. Fetch existing words for de-duplication if category is selected
             let existingWordsList: string[] = [];
             if (selectedCategoryId !== 'new') {
+                setStatus('Buscando palabras existentes para evitar duplicados...');
                 const { data: exercises } = await supabase
                     .from('exercises')
                     .select('content')
@@ -159,6 +163,7 @@ export default function AIMagicCreator() {
 
             const isSimpleTopic = topic.toLowerCase().includes('animal') || topic.length < 10;
 
+            setStatus(`Generando ${count} palabras para: ${topic}...`);
             const systemPrompt = `You are an expert language teacher. Generate a list of ${count} flashcards for the theme: "${topic}".
             Target Levels: ${selectedLevels.join(', ')}
             Target Languages: ${selectedLanguages.join(', ')}
@@ -191,7 +196,7 @@ export default function AIMagicCreator() {
                     model: 'nvidia/nemotron-3-super-120b-a12b:free',
                     messages: [
                         { role: 'system', content: systemPrompt },
-                        { role: 'user', content: `Tema: ${topic}. ${existingWordsList.length > 0 ? `Palabras a evitar: ${existingWordsList.join(', ')}` : ''}` }
+                        { role: 'user', content: `Tema: ${topic}. Cantidad: ${count}. ${existingWordsList.length > 0 ? `Palabras a evitar: ${existingWordsList.join(', ')}` : ''}` }
                     ]
                 })
             });
@@ -214,9 +219,14 @@ export default function AIMagicCreator() {
             }
 
             // 2. Generate Images with Freepik for each card (concurrently)
-            toast.info('Generando imágenes personalizadas con Freepik AI...');
+            setStatus('¡Palabras creadas! Iniciando generación de imágenes en paralelo...');
+            
+            let completedCount = 0;
             const cardsWithImages = await Promise.all(rawCards.map(async (c: any) => {
+                const word = c.word_es || c.word_en;
                 const imageUrl = await generateFreepikImage(c.freepik_prompt || `${c.word_en} cartoon icon`);
+                completedCount++;
+                setStatus(`[${completedCount}/${rawCards.length}] Imagen lista: ${word}`);
                 return {
                     es: c.word_es,
                     en: c.word_en,
@@ -226,9 +236,11 @@ export default function AIMagicCreator() {
 
             setGeneratedCards(cardsWithImages);
             setPreviewIdx(0);
+            setStatus('');
             toast.success('¡Mazos e imágenes generadas!');
         } catch (error: any) {
             console.error('Generation error:', error);
+            setStatus(`Error: ${error.message}`);
             toast.error(`Error: ${error.message}`);
         } finally {
             setIsGenerating(false);
@@ -447,6 +459,15 @@ export default function AIMagicCreator() {
                         >
                             Generar con IA
                         </Button>
+
+                        {isGenerating && status && (
+                            <div className="mt-4 p-4 rounded-xl bg-primary/5 border border-primary/10 animate-pulse">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-2 h-2 rounded-full bg-primary animate-bounce" />
+                                    <p className="text-sm font-medium text-primary">{status}</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
