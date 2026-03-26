@@ -193,7 +193,7 @@ export default function AIMagicCreator() {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: 'arcee-ai/trinity-mini',
+                    model: 'nvidia/nemotron-nano-9b-v2',
                     messages: [
                         { role: 'system', content: systemPrompt },
                         { role: 'user', content: `Tema: ${topic}. Cantidad: ${count}. ${existingWordsList.length > 0 ? `Palabras a evitar: ${existingWordsList.join(', ')}` : ''}` }
