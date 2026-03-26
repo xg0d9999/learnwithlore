@@ -36,7 +36,9 @@ import {
   renameFile,
   duplicateFile,
   updateFileMetadata,
-  shareFileWithAnyone
+  shareFileWithAnyone,
+  isTokenValid,
+  clearAccessToken
 } from '../../services/googleDriveService';
 
 interface FileItem {
@@ -80,7 +82,13 @@ const FileExplorer: React.FC = () => {
       const driveFiles = await listDriveFiles(folderId, customQuery, orderBy);
       setFiles(driveFiles || []);
     } catch (err: any) {
-      setError(err?.result?.error?.message || 'Error al cargar archivos');
+      if (err?.status === 401) {
+        clearAccessToken();
+        setIsAuthorized(false);
+        setError('Tu sesión de Google ha caducado. Por favor, vuelve a vincular tu cuenta.');
+      } else {
+        setError(err?.result?.error?.message || 'Error al cargar archivos');
+      }
     } finally {
       setLoading(false);
     }
@@ -91,7 +99,11 @@ const FileExplorer: React.FC = () => {
     try {
       const results = await searchDriveFiles(query, currentFilter.id);
       setFiles(results || []);
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.status === 401) {
+        clearAccessToken();
+        setIsAuthorized(false);
+      }
       setError('Error en la búsqueda');
     } finally {
       setLoading(false);
@@ -114,12 +126,17 @@ const FileExplorer: React.FC = () => {
         await loadGisScript();
         await initializeGapiClient();
         
-        // Check if we have a token in local storage
+        // Check if we have a token in local storage and if it's still valid
         const storedToken = localStorage.getItem('gdrive_token');
         if (storedToken) {
           window.gapi.client.setToken({ access_token: storedToken });
-          setIsAuthorized(true);
-          fetchFiles('root');
+          const valid = await isTokenValid();
+          if (valid) {
+            setIsAuthorized(true);
+            fetchFiles('root');
+          } else {
+            setIsAuthorized(false);
+          }
         }
       } catch (err) {
         console.error('Initialization error:', err);

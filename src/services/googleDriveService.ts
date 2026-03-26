@@ -226,6 +226,28 @@ export const hasAccessToken = () => {
 export const setAccessToken = (token: string) => {
   if (window.gapi?.client) {
     window.gapi.client.setToken({ access_token: token });
+    localStorage.setItem('gdrive_token', token);
+  }
+};
+
+export const clearAccessToken = () => {
+  if (window.gapi?.client) {
+    window.gapi.client.setToken(null);
+  }
+  localStorage.removeItem('gdrive_token');
+};
+
+export const isTokenValid = async () => {
+  try {
+    if (!window.gapi?.client?.drive) return false;
+    // Perform a very lightweight request to check token
+    await window.gapi.client.drive.about.get({ fields: 'user' });
+    return true;
+  } catch (err: any) {
+    if (err?.status === 401) {
+      clearAccessToken();
+    }
+    return false;
   }
 };
 

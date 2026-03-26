@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { toast } from 'sonner';
-import { listDriveFiles, initializeGapiClient, loadGapiScript, initializeTokenClient, setAccessToken, hasAccessToken, shareFileWithAnyone } from '../../services/googleDriveService';
+import { listDriveFiles, initializeGapiClient, loadGapiScript, initializeTokenClient, setAccessToken, shareFileWithAnyone, isTokenValid, clearAccessToken } from '../../services/googleDriveService';
 
 const FREE_MODELS = [
     "nvidia/nemotron-3-super-120b-a12b:free"
@@ -158,13 +158,28 @@ export default function LessonBuilder() {
             localStorage.setItem('lwl_exercise_drafts', JSON.stringify(drafts));
         }
     }, [drafts, isDraftsLoaded]);
+
     useEffect(() => {
         if (showDriveSelector) {
             loadDriveFiles(drivePath[drivePath.length - 1].id);
         }
     }, [showDriveSelector, drivePath]);
 
-    const loadDriveFiles = async (folderId: string) => {
+    const checkAuth = async () => {
+        const stored = localStorage.getItem('gdrive_token');
+        if (stored) {
+            setAccessToken(stored);
+            const valid = await isTokenValid();
+            if (valid) {
+                setIsDriveAuthorized(true);
+                return true;
+            }
+        }
+        setIsDriveAuthorized(false);
+        return false;
+    };
+
+    const loadDriveFiles = async (folderId: string = 'root') => {
         setLoadingDrive(true);
         try {
             await loadGapiScript();
@@ -172,16 +187,10 @@ export default function LessonBuilder() {
                 await initializeGapiClient();
             }
 
-            // Ensure we have a token
-            if (!hasAccessToken()) {
-                const storedToken = localStorage.getItem('gdrive_token');
-                if (storedToken) {
-                    setAccessToken(storedToken);
-                } else {
-                    setIsDriveAuthorized(false);
-                    setLoadingDrive(false);
-                    return;
-                }
+            const isAuthed = await checkAuth();
+            if (!isAuthed) {
+                setLoadingDrive(false);
+                return;
             }
 
             const files = await listDriveFiles(folderId);
@@ -207,6 +216,7 @@ export default function LessonBuilder() {
         } catch (err: any) {
             console.error('Error loading drive files:', err);
             if (err.status === 401) {
+                clearAccessToken();
                 setIsDriveAuthorized(false);
             } else {
                 toast.error('Error al conectar con Google Drive');
