@@ -193,7 +193,7 @@ export default function AIMagicCreator() {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: 'nvidia/nemotron-3-super-120b-a12b:free',
+                    model: 'google/gemma-3n-4b',
                     messages: [
                         { role: 'system', content: systemPrompt },
                         { role: 'user', content: `Tema: ${topic}. Cantidad: ${count}. ${existingWordsList.length > 0 ? `Palabras a evitar: ${existingWordsList.join(', ')}` : ''}` }
