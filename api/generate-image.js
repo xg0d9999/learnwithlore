@@ -19,7 +19,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         prompt,
-        styling: styling || { style: 'cartoon' },
+        styling: styling || { style: 'digital-art' },
         image: image || { size: 'square_1_1' }
       })
     });
