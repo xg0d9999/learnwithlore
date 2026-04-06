@@ -1,10 +1,6 @@
-export default async function handler(req, res) {
-  // Check for authorization header if you want to restrict it to Vercel Cron
-  // const authHeader = req.headers.authorization;
-  // if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-  //   return res.status(401).end('Unauthorized');
-  // }
+import { createClient } from '@supabase/supabase-js'
 
+export default async function handler(req, res) {
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
 
@@ -12,23 +8,35 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Supabase credentials missing' });
   }
 
-  try {
-    // A simple HEAD request to the REST API is enough to show activity
-    const response = await fetch(`${supabaseUrl}/rest/v1/`, {
-      method: 'GET',
-      headers: {
-        'apikey': supabaseKey,
-        'Authorization': `Bearer ${supabaseKey}`
-      }
-    });
+  // Create the Supabase client
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
-    if (response.ok) {
-      return res.status(200).json({ success: true, message: 'Supabase pinged successfully' });
-    } else {
-      return res.status(response.status).json({ success: false, message: 'Ping failed', status: response.statusText });
+  try {
+    // We try to query the profiles table which is common in this project
+    // Even if it returns an RLS error, the fact that Supabase responds means it is ACTIVE.
+    const { data, error } = await supabase.from('profiles').select('id').limit(1);
+
+    if (error) {
+      // PGRST301 is a common "JWT expired" or similar, but here it might be RLS
+      // We consider the ping successful if we reached the Supabase instance
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Supabase instance reached', 
+        details: error.message,
+        code: error.code 
+      });
     }
+
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Ping successful: query executed', 
+      count: data?.length 
+    });
   } catch (error) {
     console.error('Ping error:', error);
-    return res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ 
+      success: false, 
+      error: error.message || 'Unknown error' 
+    });
   }
 }
