@@ -200,12 +200,12 @@ export default function AIMagicCreator() {
                - THEMATIC CATEGORY TYPE: ${isSimpleTopic ? 'SIMPLE' : 'COMPLEX'}
                - If THEMATIC CATEGORY TYPE is SIMPLE, use ONLY 1 WORD per flashcard (e.g., "Dog", "Blue").
                - If THEMATIC CATEGORY TYPE is COMPLEX, you can use short phrases (MAX 3 WORDS, e.g., "Arrive on time").
-            2. IMAGE PROMPTS: For each word/phrase, provide a "freepik_prompt". This should be a basic, graphic, digital-art-style description for an AI to generate an icon-like illustration on a white/clean background.
+            2. IMAGE PROMPTS: For each word/phrase, provide a "freepik_prompt". This MUST be a high-quality, professional digital-art-style description. AVOID any mention of "cartoon", "childish", "simple style" or "icon". Use keywords like "hyper-detailed digital painting", "cinematic lighting", "modern 3D art". The subject should be on a clean, consistent background.
             
             Each flashcard MUST have:
             - word_es: The word/phrase in Spanish.
             - word_en: The word/phrase in English.
-            - freepik_prompt: The graphic/digital-art description.
+            - freepik_prompt: The detailed digital-art description (NO cartoon).
             
             Return ONLY the raw JSON array. NO MARKDOWN. NO CONVERSATION.`;
 
@@ -249,13 +249,16 @@ export default function AIMagicCreator() {
             let completedCount = 0;
             const cardsWithImages = await Promise.all(rawCards.map(async (c: any) => {
                 const word = c.word_es || c.word_en;
-                const imageUrl = await generateFreepikImage(c.freepik_prompt || `${c.word_en} digital-art icon`);
+                // Add explicit style keywords to ensure no cartoon
+                const promptForAI = c.freepik_prompt || `${c.word_en} professional digital art painting`;
+                const imageUrl = await generateFreepikImage(promptForAI);
                 completedCount++;
                 setStatus(`[${completedCount}/${rawCards.length}] Imagen lista: ${word}`);
                 return {
+                    id: Math.random().toString(36).substr(2, 9),
                     es: c.word_es,
                     en: c.word_en,
-                    image_url: imageUrl || `https://source.unsplash.com/featured/?${encodeURIComponent(c.word_en + ' digital-art')}`
+                    image_url: imageUrl || `https://source.unsplash.com/featured/?${encodeURIComponent(c.word_en + ' digital painting')}`
                 };
             }));
 

@@ -14,7 +14,7 @@ END $$;
 
 -- Policies for Storage (Run these in the Supabase SQL Editor)
 -- Note: You should manually create a public bucket named 'chat-attachments' first.
-/*
+
 INSERT INTO storage.buckets (id, name, public) 
 VALUES ('chat-attachments', 'chat-attachments', true)
 ON CONFLICT (id) DO NOTHING;
@@ -24,4 +24,4 @@ FOR INSERT TO authenticated WITH CHECK (bucket_id = 'chat-attachments');
 
 CREATE POLICY "Anyone can download chat attachments 1qj7v6a_1" ON storage.objects
 FOR SELECT TO authenticated USING (bucket_id = 'chat-attachments');
-*/
+

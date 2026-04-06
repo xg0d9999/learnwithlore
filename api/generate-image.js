@@ -1,13 +1,24 @@
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
+  let prompt, styling, image;
+
+  if (req.method === 'POST') {
+    ({ prompt, styling, image } = req.body);
+  } else if (req.method === 'GET') {
+    prompt = req.query.prompt;
+    try {
+      styling = req.query.styling ? JSON.parse(req.query.styling) : null;
+      image = req.query.image ? JSON.parse(req.query.image) : null;
+    } catch (e) {
+      // Keep defaults if parsing fails
+    }
+  } else {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { prompt, styling, image } = req.body;
   const apiKey = process.env.VITE_FREEPIK_API_KEY;
 
-  if (!apiKey) {
-    return res.status(500).json({ error: 'Freepik API Key not configured in Vercel environment' });
+  if (!apiKey || !prompt) {
+    return res.status(400).json({ error: !apiKey ? 'API Key missing' : 'Prompt missing' });
   }
 
   try {
@@ -18,7 +29,7 @@ export default async function handler(req, res) {
         'x-freepik-api-key': apiKey
       },
       body: JSON.stringify({
-        prompt,
+        prompt: `${prompt}, sophisticated digital art style, high resolution, professional lighting, no cartoon`,
         styling: styling || { style: 'digital-art' },
         image: image || { size: 'square_1_1' }
       })
